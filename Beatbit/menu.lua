@@ -13,7 +13,6 @@ return {
             draw = function(self, x, y)
                 local height = 20
                 local width = 300
-                love.graphics.setColor(255, 255, 255, 128)
                 love.graphics.rectangle("fill", x, y + (height * (self.selected - 1)) + (self.animOffset * height), width, height)
                 for i, item in ipairs(self.items) do
                     love.graphics.setColor(255, 255, 255, self.selected == i and 255 or 128)

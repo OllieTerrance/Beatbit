@@ -1,4 +1,5 @@
 menu = require("menu")
+player = require("player")
 json = require("lib.JSON")
 io.stdout:setvbuf("no")
 
@@ -27,7 +28,10 @@ function loadTracks()
     end
     menuTracks:add({
         label = "Reload",
-        action = loadTracks
+        action = function()
+            loadTracks()
+            menuTracks.selected = #menuTracks.items - 1
+        end
     })
     menuTracks:add({
         label = "Quit",
@@ -38,6 +42,7 @@ end
 function startTrack()
     local track = gameTrack
     music = love.audio.newSource("tracks/" .. track.dir .. "/" .. track.music)
+    player1 = player.new()
     mode = "game"
     music:play()
 end
@@ -54,6 +59,7 @@ function love.update(dt)
         local pos = music:tell() - track.start
         if pos < 0 then return end
         bgColour = 320 * math.max(0, 0.1 - pos % (60 / track.bpm))
+        player1:update(dt)
     end
 end
 
@@ -63,6 +69,7 @@ function love.draw()
         menuTracks:draw(10, 10)
     elseif mode == "game" then
         love.graphics.setBackgroundColor(bgColour, bgColour, bgColour)
+        player1:draw()
     end
 end
 
