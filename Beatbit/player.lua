@@ -4,8 +4,8 @@ speed = 500
 return {
     new = function()
         return {
-            x = 0,
-            y = 0,
+            x = math.random(0, love.window.getWidth()),
+            y = math.random(0, love.window.getHeight()),
             update = function(self, dt)
                 if love.keyboard.isDown("up") then
                     self.y = self.y - (dt * speed)

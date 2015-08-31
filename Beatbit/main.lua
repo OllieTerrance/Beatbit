@@ -1,5 +1,6 @@
 menu = require("menu")
 player = require("player")
+enemy = require("enemy")
 json = require("lib.JSON")
 io.stdout:setvbuf("no")
 
@@ -43,6 +44,8 @@ function startTrack()
     local track = gameTrack
     music = love.audio.newSource("tracks/" .. track.dir .. "/" .. track.music)
     player1 = player.new()
+    enemies = {}
+    prevProg = 0
     mode = "game"
     music:play()
 end
@@ -57,9 +60,20 @@ function love.update(dt)
     elseif mode == "game" then
         local track = gameTrack
         local pos = music:tell() - track.start
-        if pos < 0 then return end
-        bgColour = 320 * math.max(0, 0.1 - pos % (60 / track.bpm))
+        if pos < 0 then return end -- waiting for first beat
+        local prog = pos % (60 / track.bpm) -- amount of time into the current beat
+        if prog + (30 / track.bpm) < prevProg then -- start of next beat
+            table.insert(enemies, enemy.new())
+        end
+        prevProg = prog
+        bgColour = 320 * math.max(0, 0.1 - prog)
         player1:update(dt)
+        for i = #enemies, 1, -1 do -- iterate in reverse
+            local enemy = enemies[i]
+            if not enemy:update(dt) then -- moved outside window
+                table.remove(enemies, i)
+            end
+        end
     end
 end
 
@@ -70,6 +84,9 @@ function love.draw()
     elseif mode == "game" then
         love.graphics.setBackgroundColor(bgColour, bgColour, bgColour)
         player1:draw()
+        for i, enemy in ipairs(enemies) do
+            enemy:draw()
+        end
     end
 end
 
