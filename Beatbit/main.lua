@@ -50,6 +50,16 @@ function startTrack()
     music:play()
 end
 
+function stopTrack()
+    music:stop()
+    love.graphics.setBackgroundColor(0, 0, 0)
+end
+
+function collided(obj1, obj2)
+    return obj1.x < obj2.x + obj2.size and obj1.y < obj2.y + obj2.size and
+           obj2.x < obj1.x + obj1.size and obj2.y < obj1.y + obj1.size
+end
+
 function love.load()
     loadTracks()
 end
@@ -72,6 +82,10 @@ function love.update(dt)
             local enemy = enemies[i]
             if not enemy:update(dt) then -- moved outside window
                 table.remove(enemies, i)
+            end
+            if collided(player1, enemy) then
+                stopTrack()
+                mode = "menu"
             end
         end
     end
@@ -99,9 +113,8 @@ function love.keypressed(key)
         end
     elseif mode == "game" then
         if key == "escape" then
-            music:stop()
+            stopTrack()
             mode = "menu"
-            love.graphics.setBackgroundColor(0, 0, 0)
         end
     end
 end
