@@ -45,7 +45,7 @@ function startTrack()
     music = love.audio.newSource("tracks/" .. track.dir .. "/" .. track.music)
     player1 = player.new()
     enemies = {}
-    prevProg = 0
+    prevBeat = 0
     mode = "game"
     music:play()
 end
@@ -71,11 +71,12 @@ function love.update(dt)
         local track = gameTrack
         local pos = music:tell() - track.start
         if pos < 0 then return end -- waiting for first beat
-        local prog = pos % (60 / track.bpm) -- amount of time into the current beat
-        if prog + (30 / track.bpm) < prevProg then -- start of next beat
+        local beat = math.floor(pos / (60 / track.bpm))
+        if beat > prevBeat then -- start of next beat
             table.insert(enemies, enemy.new())
+            prevBeat = beat
         end
-        prevProg = prog
+        local prog = pos % (60 / track.bpm) -- amount of time into the current beat
         bgColour = 320 * math.max(0, 0.1 - prog)
         player1:update(dt)
         for i = #enemies, 1, -1 do -- iterate in reverse
