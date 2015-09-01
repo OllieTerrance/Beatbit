@@ -1,14 +1,18 @@
-menu = {}
-menu_mt = {__index = menu}
+local menu = {}
+menu.__index = menu
 
-function menu.new()
-    inst = {
-        items = {},
-        selected = 1,
-        animOffset = 0
-    }
-    setmetatable(inst, menu_mt)
-    return inst
+setmetatable(menu, {
+    __call = function(cls)
+        local self = setmetatable({}, cls)
+        self:new()
+        return self
+    end
+})
+
+function menu.new(self)
+    self.items = {}
+    self.selected = 1
+    self.animOffset = 0
 end
 
 function menu.add(self, item)

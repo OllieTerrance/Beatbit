@@ -17,7 +17,7 @@ function loadTracks()
             tracks[file]["dir"] = file
         end
     end
-    menuTracks = menu.new()
+    menuTracks = menu()
     for name, track in next, tracks do
         menuTracks:add({
             label = track.artist .. " -- " .. track.title,
@@ -43,7 +43,7 @@ end
 function startTrack()
     local track = gameTrack
     music = love.audio.newSource("tracks/" .. track.dir .. "/" .. track.music)
-    player1 = player.new()
+    player1 = player()
     enemies = {}
     bullets = {}
     prevBeat = 0
@@ -77,7 +77,7 @@ function love.update(dt)
         local beat = math.floor(pos / (60 / track.bpm))
         local newBeat = false
         if beat > prevBeat then -- start of next beat
-            table.insert(enemies, enemy.new(player1.x, player1.y))
+            table.insert(enemies, enemy(player1.x, player1.y))
             prevBeat = beat
             newBeat = true
         end

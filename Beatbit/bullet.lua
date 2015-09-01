@@ -1,16 +1,24 @@
-bullet = {}
-bullet_mt = {__index = bullet}
+entity = require("entity")
 
-function bullet.new(sX, sY, sBearing)
-    local inst = {
-        x = sX,
-        y = sY,
-        size = 10,
-        speed = 400,
-        bearing = sBearing
-    }
-    setmetatable(inst, bullet_mt)
-    return inst
+local bullet = {}
+bullet.__index = bullet
+
+setmetatable(bullet, {
+    __index = entity,
+    __call = function(cls, sX, sY, sBearing)
+        local self = setmetatable({}, cls)
+        self:new(sX, sY, sBearing)
+        return self
+    end
+})
+
+function bullet.new(self, sX, sY, sBearing)
+    entity.new(self, "fill", {192, 224, 255})
+    self.x = sX
+    self.y = sY
+    self.size = 10
+    self.speed = 400
+    self.bearing = sBearing
 end
 
 function bullet.update(self, dt)
@@ -21,11 +29,6 @@ function bullet.update(self, dt)
     end
     return self.x > - (self.size / 2) and self.x < love.window.getWidth() + (self.size / 2) and
            self.y > - (self.size / 2) and self.y < love.window.getHeight() + (self.size / 2)
-end
-
-function bullet.draw(self)
-    love.graphics.setColor(192, 224, 255)
-    love.graphics.rectangle("fill", self.x - (self.size / 2), self.y - (self.size / 2), self.size, self.size)
 end
 
 return bullet
