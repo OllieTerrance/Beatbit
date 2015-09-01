@@ -45,6 +45,7 @@ function startTrack()
     music = love.audio.newSource("tracks/" .. track.dir .. "/" .. track.music)
     player1 = player.new()
     enemies = {}
+    bullets = {}
     prevBeat = 0
     mode = "game"
     music:play()
@@ -70,23 +71,45 @@ function love.update(dt)
     elseif mode == "game" then
         local track = gameTrack
         local pos = music:tell() - track.start
-        if pos < 0 then return end -- waiting for first beat
+        if pos < 0 then -- waiting for first beat
+            return
+        end
         local beat = math.floor(pos / (60 / track.bpm))
+        local newBeat = false
         if beat > prevBeat then -- start of next beat
             table.insert(enemies, enemy.new())
             prevBeat = beat
+            newBeat = true
         end
         local prog = pos % (60 / track.bpm) -- amount of time into the current beat
         bgColour = 320 * math.max(0, 0.1 - prog)
-        player1:update(dt)
+        for i = #bullets, 1, -1 do -- iterate in reverse
+            local bullet = bullets[i]
+            if bullet:update(dt) then
+                for j = #enemies, 1, -1 do -- iterate in reverse
+                    local enemy = enemies[j]
+                    if collided(bullet, enemy) then
+                        table.remove(bullets, i)
+                        table.remove(enemies, j)
+                    end
+                end
+            else -- moved outside window
+                table.remove(bullets, i)
+            end
+        end
+        local bullet = player1:update(dt, newBeat)
+        if bullet then
+            table.insert(bullets, bullet)
+        end
         for i = #enemies, 1, -1 do -- iterate in reverse
             local enemy = enemies[i]
-            if not enemy:update(dt) then -- moved outside window
+            if enemy:update(dt) then
+                if collided(player1, enemy) then
+                    stopTrack()
+                    mode = "menu"
+                end
+            else -- moved outside window
                 table.remove(enemies, i)
-            end
-            if collided(player1, enemy) then
-                stopTrack()
-                mode = "menu"
             end
         end
     end
@@ -101,6 +124,9 @@ function love.draw()
         player1:draw()
         for i, enemy in ipairs(enemies) do
             enemy:draw()
+        end
+        for i, bullet in ipairs(bullets) do
+            bullet:draw()
         end
     end
 end
