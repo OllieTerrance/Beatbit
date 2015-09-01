@@ -77,7 +77,7 @@ function love.update(dt)
         local beat = math.floor(pos / (60 / track.bpm))
         local newBeat = false
         if beat > prevBeat then -- start of next beat
-            table.insert(enemies, enemy.new())
+            table.insert(enemies, enemy.new(player1.x, player1.y))
             prevBeat = beat
             newBeat = true
         end

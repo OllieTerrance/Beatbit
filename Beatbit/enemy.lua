@@ -1,8 +1,14 @@
 return {
-    new = function()
+    new = function(pX, pY)
+        local sX = math.random(0, love.window.getWidth())
+        local sY = math.random(0, love.window.getHeight())
+        while math.abs(sX - pX) < 50 and math.abs(sY - pY) < 50 do -- too close to player
+            sX = math.random(0, love.window.getWidth())
+            sY = math.random(0, love.window.getHeight())
+        end
         return {
-            x = math.random(0, love.window.getWidth()),
-            y = math.random(0, love.window.getHeight()),
+            x = sX,
+            y = sY,
             size = math.random(20, 60),
             xSpeed = math.random(-50, 50),
             ySpeed = math.random(-50, 50),
