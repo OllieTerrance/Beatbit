@@ -57,8 +57,8 @@ function stopTrack()
 end
 
 function collided(obj1, obj2)
-    return obj1.x < obj2.x + obj2.size and obj1.y < obj2.y + obj2.size and
-           obj2.x < obj1.x + obj1.size and obj2.y < obj1.y + obj1.size
+    return obj1.x - (obj1.size / 2) < obj2.x + (obj2.size / 2) and obj1.y - (obj1.size / 2) < obj2.y + (obj2.size / 2) and
+           obj2.x - (obj2.size / 2) < obj1.x + (obj1.size / 2) and obj2.y - (obj2.size / 2) < obj1.y + (obj1.size / 2)
 end
 
 function love.load()

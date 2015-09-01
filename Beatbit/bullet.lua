@@ -3,8 +3,8 @@ return {
         return {
             x = sX,
             y = sY,
-            size = 2,
-            speed = 250,
+            size = 10,
+            speed = 400,
             bearing = sBearing,
             update = function(self, dt)
                 if self.bearing == "n" or self.bearing == "s" then
@@ -12,12 +12,12 @@ return {
                 else
                     self.x = self.x + ((self.bearing == "e" and 1 or -1) * dt * self.speed)
                 end
-                return self.x > (0 - self.size) and self.x < love.window.getWidth() and
-                       self.y > (0 - self.size) and self.y < love.window.getHeight()
+                return self.x > - (self.size / 2) and self.x < love.window.getWidth() + (self.size / 2) and
+                       self.y > - (self.size / 2) and self.y < love.window.getHeight() + (self.size / 2)
             end,
             draw = function(self)
                 love.graphics.setColor(192, 224, 255)
-                love.graphics.rectangle("fill", self.x, self.y, self.size, self.size)
+                love.graphics.rectangle("fill", self.x - (self.size / 2), self.y - (self.size / 2), self.size, self.size)
             end
         }
     end

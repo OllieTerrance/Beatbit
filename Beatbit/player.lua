@@ -5,7 +5,7 @@ return {
         return {
             x = math.random(0, love.window.getWidth()),
             y = math.random(0, love.window.getHeight()),
-            size = 10,
+            size = 20,
             speed = 500,
             update = function(self, dt, newBeat)
                 if love.keyboard.isDown("up") then
@@ -20,8 +20,8 @@ return {
                 if love.keyboard.isDown("right") then
                     self.x = self.x + (dt * self.speed)
                 end
-                self.x = math.max(0, math.min(love.window.getWidth() - self.size, self.x))
-                self.y = math.max(0, math.min(love.window.getHeight() - self.size, self.y))
+                self.x = math.max(self.size / 2, math.min(love.window.getWidth() - (self.size / 2), self.x))
+                self.y = math.max(self.size / 2, math.min(love.window.getHeight() - (self.size / 2), self.y))
                 if newBeat then
                     if love.keyboard.isDown("w") then
                         return bullet:new(self.x, self.y, "n")
@@ -36,7 +36,7 @@ return {
             end,
             draw = function(self)
                 love.graphics.setColor(160, 192, 255)
-                love.graphics.rectangle("fill", self.x, self.y, self.size, self.size)
+                love.graphics.rectangle("fill", self.x - (self.size / 2), self.y - (self.size / 2), self.size, self.size)
             end
         }
     end
