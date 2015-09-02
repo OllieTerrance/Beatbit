@@ -22,6 +22,7 @@ function bullet.new(self, sX, sY, sBearing)
 end
 
 function bullet.update(self, dt)
+    entity.update(self, dt)
     if self.bearing == "n" or self.bearing == "s" then
         self.y = self.y + ((self.bearing == "s" and 1 or -1) * dt * self.speed)
     else
