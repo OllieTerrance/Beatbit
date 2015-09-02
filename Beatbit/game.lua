@@ -28,41 +28,13 @@ function game.update(self, dt)
     if pos < 0 then -- waiting for first beat
         return
     end
-    local beat = math.floor(pos / (60 / self.track.bpm))
-    local newBeat = false
-    if beat > self.beat then -- start of next beat
-        table.insert(self.enemies, enemy(self.player.x, self.player.y))
-        self.beat = beat
-        newBeat = true
-    end
-    local prog = pos % (60 / self.track.bpm) -- amount of time into the current beat
-    self.bgColour = 320 * math.max(0, 0.1 - prog)
-    for i = #self.bullets, 1, -1 do -- iterate in reverse
-        local bullet = self.bullets[i]
-        bullet:update(dt)
-        if bullet:visible() then
-            for j = #self.enemies, 1, -1 do -- iterate in reverse
-                local enemy = self.enemies[j]
-                if not enemy.destroyTTL and bullet:overlaps(enemy) then
-                    table.remove(self.bullets, i)
-                    enemy:destroy()
-                end
-            end
-        else -- moved outside window
-            table.remove(self.bullets, i)
-        end
-    end
-    local bullet = self.player:update(dt, newBeat)
-    if bullet then
-        table.insert(self.bullets, bullet)
-    end
-    for i = #self.enemies, 1, -1 do -- iterate in reverse
+    for i = #self.enemies, 1, -1 do -- update all enemies
         local enemy = self.enemies[i]
         enemy:update(dt)
-        if enemy.destroyTTL and enemy.destroyTTL < 0 then
+        if enemy.destroyTTL and enemy.destroyTTL < 0 then -- enemy animation finished
             table.remove(self.enemies, i)
         elseif enemy:visible() then
-            if not enemy.destroyTTL and self.player:overlaps(enemy) then
+            if not enemy.destroyTTL and self.player:overlaps(enemy) then -- player hit an enemy
                 self.music:stop()
                 love.graphics.setBackgroundColor(0, 0, 0)
                 self.stopped = true
@@ -71,6 +43,50 @@ function game.update(self, dt)
         else -- moved outside window
             table.remove(self.enemies, i)
         end
+    end
+    for i = #self.bullets, 1, -1 do -- update all bullets
+        local bullet = self.bullets[i]
+        bullet:update(dt)
+        if bullet:visible() then
+            for j = #self.enemies, 1, -1 do
+                local enemy = self.enemies[j]
+                if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
+                    table.remove(self.bullets, i)
+                    enemy:destroy()
+                end
+            end
+        else -- moved outside window
+            table.remove(self.bullets, i)
+        end
+    end
+    local beat = math.floor(pos / (60 / self.track.bpm))
+    local newBeat = false
+    if beat > self.beat then -- start of next beat
+        if beat >= self.track.length then -- end of song
+            if not self.ended then
+                for i, enemy in ipairs(self.enemies) do
+                    enemy:destroy()
+                end
+            end
+            self.ended = true
+            for i, enemy in ipairs(self.enemies) do
+                enemy:update(dt)
+            end
+            for i, bullet in ipairs(self.bullets) do
+                bullet:update(dt)
+            end
+            return
+        else
+            table.insert(self.enemies, enemy(self.player.x, self.player.y))
+            self.beat = beat
+            newBeat = true
+        end
+    end
+    local prog = pos % (60 / self.track.bpm) -- amount of time into the current beat
+    self.bgColour = 320 * math.max(0, 0.1 - prog)
+    local bullet = self.player:update(dt, newBeat) -- player update returns a new bullet if created
+    if bullet then
+        table.insert(self.bullets, bullet)
     end
 end
 

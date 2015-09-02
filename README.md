@@ -18,11 +18,12 @@ Inside `track.json`:
     "title": "Track Name",
     "music": "music.mp3",
     "bpm": 140,
-    "start": 0.21
+    "start": 0.21,
+    "length": 254
 }
 ```
 
-Here, `start` is the position (in seconds) of the first beat.
+Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.
 
 ## External
 
