@@ -18,7 +18,7 @@ function player.new(self, x, y)
     self.x = x or math.random(0, love.window.getWidth())
     self.y = y or math.random(0, love.window.getHeight())
     self.size = 20
-    self.speed = 500
+    self.speed = 400
     self.score = 0
     self.deaths = 0
 end

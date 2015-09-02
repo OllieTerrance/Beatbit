@@ -32,11 +32,11 @@ function game.update(self, dt)
     local beat = math.floor(pos / (60 / self.track.bpm))
     local newBeat = (beat > self.beat)
     self.beat = beat
-    local speed = 1
+    local speed = self.track.bpm / 120
     for i, speedVars in ipairs(self.track.speeds) do
         low, high, mod = unpack(speedVars)
         if beat >= low and beat < high then
-            speed = mod
+            speed = speed * mod
             break
         end
     end

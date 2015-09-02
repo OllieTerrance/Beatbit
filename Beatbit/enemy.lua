@@ -23,8 +23,8 @@ function enemy.new(self, pX, pY)
     self.x = sX
     self.y = sY
     self.size = math.random(20, 60)
-    self.xSpeed = math.random(-50, 50)
-    self.ySpeed = math.random(-50, 50)
+    self.xSpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
+    self.ySpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
 end
 
 function enemy.update(self, dt)
