@@ -27,8 +27,6 @@ function bullet.update(self, dt)
     else
         self.x = self.x + ((self.bearing == "e" and 1 or -1) * dt * self.speed)
     end
-    return self.x > - (self.size / 2) and self.x < love.window.getWidth() + (self.size / 2) and
-           self.y > - (self.size / 2) and self.y < love.window.getHeight() + (self.size / 2)
 end
 
 return bullet

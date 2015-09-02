@@ -28,10 +28,38 @@ function enemy.new(self, pX, pY)
 end
 
 function enemy.update(self, dt)
-    self.x = self.x + (dt * self.xSpeed)
-    self.y = self.y + (dt * self.ySpeed)
-    return self.x > - (self.size / 2) and self.x < love.window.getWidth() + (self.size / 2) and
-           self.y > - (self.size / 2) and self.y < love.window.getHeight() + (self.size / 2)
+    if self.destroyTTL then
+        self.destroyTTL = self.destroyTTL - dt
+    else
+        self.x = self.x + (dt * self.xSpeed)
+        self.y = self.y + (dt * self.ySpeed)
+   end
+end
+
+function enemy.destroy(self)
+    self.destroyTTL = 1
+    self.destroyPoints = {}
+    for i = 1, 10 do
+        table.insert(self.destroyPoints, {math.random() * math.pi * 2, math.random(3, 5)})
+    end
+end
+
+function enemy.draw(self)
+    if self.destroyTTL then
+        for i, point in ipairs(self.destroyPoints) do
+            rad, size = unpack(point)
+            local x = math.cos(rad) * self.size * (4 - (self.destroyTTL * 3)) / 2
+            local y = math.sin(rad) * self.size * (4 - (self.destroyTTL * 3)) / 2
+            local colour = {}
+            for i = 1, 3 do
+                table.insert(colour, self.colour[i] * self.destroyTTL) -- fade to black
+            end
+            love.graphics.setColor(unpack(colour))
+            love.graphics.rectangle(self.drawMode, self.x + x - 1, self.y + y - 1, size, size)
+        end
+    else
+        entity.draw(self)
+    end
 end
 
 return enemy

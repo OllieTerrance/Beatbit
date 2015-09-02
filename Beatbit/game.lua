@@ -12,11 +12,6 @@ setmetatable(game, {
     end
 })
 
-function collided(obj1, obj2)
-    return obj1.x - (obj1.size / 2) < obj2.x + (obj2.size / 2) and obj1.y - (obj1.size / 2) < obj2.y + (obj2.size / 2) and
-           obj2.x - (obj2.size / 2) < obj1.x + (obj1.size / 2) and obj2.y - (obj2.size / 2) < obj1.y + (obj1.size / 2)
-end
-
 function game.new(self, track)
     self.track = track
     self.music = love.audio.newSource("tracks/" .. self.track.dir .. "/" .. self.track.music)
@@ -44,12 +39,13 @@ function game.update(self, dt)
     self.bgColour = 320 * math.max(0, 0.1 - prog)
     for i = #self.bullets, 1, -1 do -- iterate in reverse
         local bullet = self.bullets[i]
-        if bullet:update(dt) then
+        bullet:update(dt)
+        if bullet:visible() then
             for j = #self.enemies, 1, -1 do -- iterate in reverse
                 local enemy = self.enemies[j]
-                if collided(bullet, enemy) then
+                if not enemy.destroyTTL and bullet:overlaps(enemy) then
                     table.remove(self.bullets, i)
-                    table.remove(self.enemies, j)
+                    enemy:destroy()
                 end
             end
         else -- moved outside window
@@ -62,9 +58,13 @@ function game.update(self, dt)
     end
     for i = #self.enemies, 1, -1 do -- iterate in reverse
         local enemy = self.enemies[i]
-        if enemy:update(dt) then
-            if collided(self.player, enemy) then
+        enemy:update(dt)
+        if enemy.destroyTTL and enemy.destroyTTL < 0 then
+            table.remove(self.enemies, i)
+        elseif enemy:visible() then
+            if not enemy.destroyTTL and self.player:overlaps(enemy) then
                 self.music:stop()
+                love.graphics.setBackgroundColor(0, 0, 0)
                 self.stopped = true
                 return
             end
@@ -88,6 +88,7 @@ end
 function game.keypressed(self, key)
     if key == "escape" then
         self.music:stop()
+        love.graphics.setBackgroundColor(0, 0, 0)
         self.stopped = true
     end
 end
