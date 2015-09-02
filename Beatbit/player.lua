@@ -19,6 +19,8 @@ function player.new(self, x, y)
     self.y = y or math.random(0, love.window.getHeight())
     self.size = 20
     self.speed = 500
+    self.score = 0
+    self.deaths = 0
 end
 
 function player.update(self, dt, newBeat)

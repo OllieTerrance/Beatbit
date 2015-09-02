@@ -56,7 +56,7 @@ end
 
 function love.draw()
     love.graphics.setColor(128, 128, 128)
-    love.graphics.printf(love.timer.getFPS(), 770, 10, 20, "right")
+    love.graphics.printf(love.timer.getFPS(), love.window.getWidth() - 30, 10, 20, "right")
     if mode == "menu" then
         menuTracks:draw(10, 10)
     elseif mode == "game" then

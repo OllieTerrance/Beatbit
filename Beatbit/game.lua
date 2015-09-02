@@ -61,7 +61,8 @@ function game.update(self, dt)
     end
     if self.player.destroyTTL then -- player respawning
         if self.player.destroyTTL < 0 then
-            self.player = player(self.player.x, self.player.y)
+            self.player.destroyTTL = nil
+            self.player.deaths = self.player.deaths + 1
             return
         else
             self.player:update(dt * speed)
@@ -78,6 +79,7 @@ function game.update(self, dt)
                 if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
                     table.remove(self.bullets, i)
                     enemy:destroy()
+                    self.player.score = self.player.score + 1
                 end
             end
         else -- moved outside window
@@ -106,6 +108,10 @@ function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
     love.graphics.setColor(128, 128, 128)
     love.graphics.print(self.beat, 10, 10)
+    love.graphics.setColor(128, 192, 255)
+    love.graphics.print(self.player.score, 10, love.window.getHeight() - 25)
+    love.graphics.setColor(192, 64, 64)
+    love.graphics.printf(self.player.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
     self.player:draw()
     for i, enemy in ipairs(self.enemies) do
         enemy:draw()
