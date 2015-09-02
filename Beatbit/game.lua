@@ -32,34 +32,47 @@ function game.update(self, dt)
     local beat = math.floor(pos / (60 / self.track.bpm))
     local newBeat = (beat > self.beat)
     self.beat = beat
-    self.bgColour = 320 * math.max(0, 0.1 - prog)
+    local speed = 1
+    for i, speedVars in ipairs(self.track.speeds) do
+        low, high, mod = unpack(speedVars)
+        if beat >= low and beat < high then
+            speed = mod
+            break
+        end
+    end
     for i = #self.enemies, 1, -1 do -- update all enemies
         local enemy = self.enemies[i]
-        enemy:update(dt)
-        if enemy.destroyTTL and enemy.destroyTTL < 0 then -- enemy animation finished
+        enemy:update(dt * speed)
+        if enemy.destroyTTL and enemy.destroyTTL < 0 then -- destroy animation finished
             table.remove(self.enemies, i)
         elseif enemy:visible() then
             if self.player:overlaps(enemy) then -- player hit an enemy
                 self.player:destroy()
-                self.bullets = {}
+                for j, bullet in ipairs(self.bullets) do
+                    if not bullet.destroyTTL then -- don't restart existing animations
+                        bullet:destroy()
+                    end
+                end
                 return
             end
         else -- moved outside window
             table.remove(self.enemies, i)
         end
     end
-    if self.player.destroyTTL then
+    if self.player.destroyTTL then -- player respawning
         if self.player.destroyTTL < 0 then
             self.player = player(self.player.x, self.player.y)
             return
         else
-            self.player:update(dt)
+            self.player:update(dt * speed)
         end
     end
     for i = #self.bullets, 1, -1 do -- update all bullets
         local bullet = self.bullets[i]
-        bullet:update(dt)
-        if bullet:visible() then
+        bullet:update(dt * speed)
+        if bullet.destroyTTL and bullet.destroyTTL < 0 then -- destroy animation finished
+            table.remove(self.bullets, i)
+        elseif bullet:visible() then
             for j = #self.enemies, 1, -1 do
                 local enemy = self.enemies[j]
                 if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
@@ -76,26 +89,23 @@ function game.update(self, dt)
             for i, enemy in ipairs(self.enemies) do
                 enemy:destroy()
             end
-        end
-        self.ended = true
-        for i, enemy in ipairs(self.enemies) do
-            enemy:update(dt)
-        end
-        for i, bullet in ipairs(self.bullets) do
-            bullet:update(dt)
+            self.ended = true
         end
         return
     elseif newBeat then -- start of next beat, spawn an enemy
         table.insert(self.enemies, enemy(self.player.x, self.player.y))
     end
-    local bullet = self.player:update(dt, newBeat) -- player update returns a new bullet if created
+    local bullet = self.player:update(dt * speed, newBeat) -- player update returns a new bullet if created
     if bullet then
         table.insert(self.bullets, bullet)
     end
+    self.bgColour = 320 * math.max(0, 0.1 - prog)
 end
 
 function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
+    love.graphics.setColor(128, 128, 128)
+    love.graphics.print(self.beat, 10, 10)
     self.player:draw()
     for i, enemy in ipairs(self.enemies) do
         enemy:draw()

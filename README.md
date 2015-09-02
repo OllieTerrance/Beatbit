@@ -19,11 +19,14 @@ Inside `track.json`:
     "music": "music.mp3",
     "bpm": 140,
     "start": 0.21,
-    "length": 254
+    "length": 254,
+    "speeds": [
+        [64, 96, 0.5]
+    ]
 }
 ```
 
-Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.
+Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.  Use `speeds` to create beat ranges where all movement is accelerated or slowed.
 
 ## External
 
