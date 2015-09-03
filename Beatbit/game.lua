@@ -1,6 +1,9 @@
 player = require("player")
 enemy = require("enemy")
 
+local soundBuzz = love.audio.newSource("sound/buzz.wav", "static")
+local soundHit = love.audio.newSource("sound/hit.wav", "static")
+
 local game = {}
 game.__index = game
 
@@ -53,6 +56,7 @@ function game.update(self, dt)
                         bullet:destroy()
                     end
                 end
+                soundHit:play()
                 return
             end
         else -- moved outside window
@@ -80,6 +84,7 @@ function game.update(self, dt)
                     table.remove(self.bullets, i)
                     enemy:destroy()
                     self.player.score = self.player.score + 1
+                    soundBuzz:play()
                 end
             end
         else -- moved outside window

@@ -3,7 +3,26 @@ menu = require("menu")
 game = require("game")
 io.stdout:setvbuf("no")
 
-mode = "menu"
+local soundDeny = love.audio.newSource("sound/deny.wav", "static")
+
+local mode = "menu-main"
+local menuMain = menu(100)
+menuMain:add({
+    label = "Single player",
+    action = function()
+        mode = "menu-play"
+    end
+})
+menuMain:add({
+    label = "Reload tracks",
+    action = function()
+        loadTracks()
+    end
+})
+menuMain:add({
+    label = "Quit",
+    action = love.event.quit
+})
 
 function loadTracks()
     tracks = {}
@@ -25,17 +44,6 @@ function loadTracks()
             end
         })
     end
-    menuTracks:add({
-        label = "Reload",
-        action = function()
-            loadTracks()
-            menuTracks.selected = #menuTracks.items - 1
-        end
-    })
-    menuTracks:add({
-        label = "Quit",
-        action = love.event.quit
-    })
 end
 
 function love.load()
@@ -45,9 +53,11 @@ end
 function love.update(dt)
     if curGame and curGame.stopped then
         curGame = nil
-        mode = "menu"
+        mode = "menu-main"
     end
-    if mode == "menu" then
+    if mode == "menu-main" then
+        menuMain:update(dt)
+    elseif mode == "menu-play" then
         menuTracks:update(dt)
     elseif mode == "game" then
         curGame:update(dt)
@@ -57,17 +67,38 @@ end
 function love.draw()
     love.graphics.setColor(128, 128, 128)
     love.graphics.printf(love.timer.getFPS(), love.window.getWidth() - 30, 10, 20, "right")
-    if mode == "menu" then
-        menuTracks:draw(10, 10)
+    if string.sub(mode, 0, 4) == "menu" then
+        love.graphics.setColor(64, 64, 64)
+        love.graphics.printf("Beatbit", love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
+        love.graphics.setColor(128, 128, 128)
+        menuMain:draw(10, 10, mode == "menu-main")
+    end
+    if mode == "menu-play" then
+        if next(menuTracks.items) == nil then
+            love.graphics.print("No tracks detected!", 120, 14)
+        else
+            menuTracks:draw(120, 10, true)
+        end
     elseif mode == "game" then
         curGame:draw()
     end
 end
 
 function love.keypressed(key)
-    if mode == "menu" then
+    if mode == "menu-main" then
         if key == "escape" then
             love.event.quit()
+        else
+            menuMain:keypressed(key)
+        end
+    elseif mode == "menu-play" then
+        if key == "escape" or key == "left" then
+            mode = "menu-main"
+            menuTracks.selected = 1
+        elseif next(menuTracks.items) == nil then
+            if key == "up" or key == "down" or key == "right" or key == "return" then
+                soundDeny:play()
+            end
         else
             menuTracks:keypressed(key)
         end
