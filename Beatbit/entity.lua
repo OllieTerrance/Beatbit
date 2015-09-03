@@ -27,7 +27,7 @@ end
 
 function entity.update(self, dt)
     if self.destroyTTL then
-        self.destroyTTL = self.destroyTTL - dt
+        self.destroyTTL = self.destroyTTL - math.abs(dt) -- don't play animation backwards
     end
 end
 
