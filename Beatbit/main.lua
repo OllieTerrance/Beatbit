@@ -59,7 +59,7 @@ function setup.selectTrack(track)
     menuPlayers:add({
         label = "Start!",
         action = function()
-            setup.game = game(setup.track)
+            setup.game = game(setup.track, setup.players)
             setup.mode = "game"
         end
     })
@@ -72,7 +72,10 @@ end
 
 function love.update(dt)
     if setup.game and setup.game.stopped then
-        setup = {mode = "menu-main"}
+        setup.game = nil
+        setup.track = nil
+        setup.players = nil
+        setup.mode = "menu-main"
     end
     if string.sub(setup.mode, 0, 4) == "menu" then
         menuMain:update(dt)
@@ -126,7 +129,7 @@ function love.keypressed(key)
         menuPlay:keypressed(key)
     elseif setup.mode == "menu-players" then
         local kbdPlayer = false
-        for i, player in pairs(setup.players) do
+        for i, player in ipairs(setup.players) do
             if player == -1 then
                 kbdPlayer = i
                 break
@@ -148,14 +151,14 @@ function love.joystickpressed(joystick, button)
     if setup.mode == "menu-players" then
         id = joystick:getID()
         if button == 1 then
-            for i, player in pairs(setup.players) do
+            for i, player in ipairs(setup.players) do
                 if player == id then
                     return
                 end
             end
             table.insert(setup.players, id)
         elseif button == 2 then
-            for i, player in pairs(setup.players) do
+            for i, player in ipairs(setup.players) do
                 if player == id then
                     table.remove(setup.players, i)
                     return

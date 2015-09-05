@@ -8,17 +8,20 @@ local game = {}
 game.__index = game
 
 setmetatable(game, {
-    __call = function(cls, track)
+    __call = function(cls, track, players)
         local self = setmetatable({}, cls)
-        self:new(track)
+        self:new(track, players)
         return self
     end
 })
 
-function game.new(self, track)
+function game.new(self, track, players)
     self.track = track
     self.music = love.audio.newSource("tracks/" .. self.track.dir .. "/" .. self.track.music)
-    self.player = player()
+    self.players = {}
+    for i, id in ipairs(players) do
+        table.insert(self.players, player(id))
+    end
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
@@ -49,27 +52,31 @@ function game.update(self, dt)
         if enemy.destroyTTL and enemy.destroyTTL < 0 then -- destroy animation finished
             table.remove(self.enemies, i)
         elseif enemy:visible() then
-            if self.player:overlaps(enemy) then -- player hit an enemy
-                self.player:destroy()
-                for j, bullet in ipairs(self.bullets) do
-                    if not bullet.destroyTTL then -- don't restart existing animations
-                        bullet:destroy()
+            for i, plr in ipairs(self.players) do
+                if plr:overlaps(enemy) then -- player hit an enemy
+                    plr:destroy()
+                    for j, bullet in ipairs(self.bullets) do
+                        if not bullet.destroyTTL then -- don't restart existing animations
+                            bullet:destroy()
+                        end
                     end
+                    soundHit:play()
+                    return
                 end
-                soundHit:play()
-                return
             end
         else -- moved outside window
             table.remove(self.enemies, i)
         end
     end
-    if self.player.destroyTTL then -- player respawning
-        if self.player.destroyTTL < 0 then
-            self.player.destroyTTL = nil
-            self.player.deaths = self.player.deaths + 1
-            return
-        else
-            self.player:update(dt * speed)
+    for i, plr in ipairs(self.players) do
+        if plr.destroyTTL then -- player respawning
+            if plr.destroyTTL < 0 then
+                plr.destroyTTL = nil
+                plr.deaths = plr.deaths + 1
+                return
+            else
+                plr:update(dt * speed)
+            end
         end
     end
     for i = #self.bullets, 1, -1 do -- update all bullets
@@ -83,7 +90,7 @@ function game.update(self, dt)
                 if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
                     table.remove(self.bullets, i)
                     enemy:destroy()
-                    self.player.score = self.player.score + 1
+                    bullet.player.score = bullet.player.score + 1
                     soundBuzz:play()
                 end
             end
@@ -100,11 +107,13 @@ function game.update(self, dt)
         end
         return
     elseif newBeat then -- start of next beat, spawn an enemy
-        table.insert(self.enemies, enemy(self.player.x, self.player.y))
+        table.insert(self.enemies, enemy(self.players))
     end
-    local bullet = self.player:update(dt * speed, newBeat) -- player update returns a new bullet if created
-    if bullet then
-        table.insert(self.bullets, bullet)
+    for i, plr in ipairs(self.players) do
+        local bullet = plr:update(dt * speed, newBeat) -- player update returns a new bullet if created
+        if bullet then
+            table.insert(self.bullets, bullet)
+        end
     end
     self.bgColour = 320 * math.max(0, 0.1 - prog)
 end
@@ -114,10 +123,12 @@ function game.draw(self)
     love.graphics.setColor(128, 128, 128)
     love.graphics.print(self.beat, 10, 10)
     love.graphics.setColor(128, 192, 255)
-    love.graphics.print(self.player.score, 10, love.window.getHeight() - 25)
+    love.graphics.print(self.players[1].score, 10, love.window.getHeight() - 25)
     love.graphics.setColor(192, 64, 64)
-    love.graphics.printf(self.player.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
-    self.player:draw()
+    love.graphics.printf(self.players[1].deaths, love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
+    for i, plr in ipairs(self.players) do
+        plr:draw()
+    end
     for i, enemy in ipairs(self.enemies) do
         enemy:draw()
     end

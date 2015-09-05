@@ -5,20 +5,21 @@ bullet.__index = bullet
 
 setmetatable(bullet, {
     __index = entity,
-    __call = function(cls, sX, sY, sBearing)
+    __call = function(cls, sX, sY, sBearing, plr)
         local self = setmetatable({}, cls)
-        self:new(sX, sY, sBearing)
+        self:new(sX, sY, sBearing, plr)
         return self
     end
 })
 
-function bullet.new(self, sX, sY, sBearing)
+function bullet.new(self, sX, sY, sBearing, plr)
     entity.new(self, "fill", {192, 224, 255})
     self.x = sX
     self.y = sY
     self.size = 10
     self.speed = 400
     self.bearing = sBearing
+    self.player = plr
 end
 
 function bullet.update(self, dt)

@@ -42,13 +42,13 @@ function player.update(self, dt, newBeat)
         self.y = math.max(self.size / 2, math.min(love.window.getHeight() - (self.size / 2), self.y))
         if newBeat and not (dt == 0) then -- don't create bullets on pauses
             if love.keyboard.isDown("w") then
-                return bullet(self.x, self.y, "n")
+                return bullet(self.x, self.y, "n", self)
             elseif love.keyboard.isDown("s") then
-                return bullet(self.x, self.y, "s")
+                return bullet(self.x, self.y, "s", self)
             elseif love.keyboard.isDown("a") then
-                return bullet(self.x, self.y, "w")
+                return bullet(self.x, self.y, "w", self)
             elseif love.keyboard.isDown("d") then
-                return bullet(self.x, self.y, "e")
+                return bullet(self.x, self.y, "e", self)
             end
         end
     end
