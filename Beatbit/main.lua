@@ -5,25 +5,6 @@ io.stdout:setvbuf("no")
 
 local soundDeny = love.audio.newSource("sound/deny.wav", "static")
 
-local mode = "menu-main"
-local menuMain = menu(100)
-menuMain:add({
-    label = "Single player",
-    action = function()
-        mode = "menu-play"
-    end
-})
-menuMain:add({
-    label = "Reload tracks",
-    action = function()
-        loadTracks()
-    end
-})
-menuMain:add({
-    label = "Quit",
-    action = love.event.quit
-})
-
 function loadTracks()
     tracks = {}
     local dir = love.filesystem.getDirectoryItems("tracks")
@@ -31,19 +12,58 @@ function loadTracks()
         if love.filesystem.isDirectory("tracks/" .. file)
         and love.filesystem.isFile("tracks/" .. file .. "/track.json") then
             tracks[file] = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
-            tracks[file]["dir"] = file
+            tracks[file].dir = file
         end
     end
-    menuTracks = menu()
+    menuPlay = menu(300, function()
+        setup.mode = "menu-main"
+    end)
     for name, track in next, tracks do
-        menuTracks:add({
+        menuPlay:add({
             label = track.artist .. " -- " .. track.title,
             action = function()
-                curGame = game(track)
-                mode = "game"
+                setup.selectTrack(track)
             end
         })
     end
+end
+
+menuMain = menu(100, love.event.quit)
+menuMain:add({
+    label = "Play!",
+    action = function()
+        setup.mode = "menu-play"
+    end
+})
+menuMain:add({
+    label = "Reload tracks",
+    action = loadTracks
+})
+menuMain:add({
+    label = "Quit",
+    action = love.event.quit
+})
+
+menuPlayers = nil
+
+setup = {mode = "menu-main"}
+
+function setup.selectTrack(track)
+    setup.track = track
+    setup.players = {}
+    menuPlayers = menu(60, function()
+        setup.track = nil
+        setup.players = nil
+        setup.mode = "menu-play"
+    end)
+    menuPlayers:add({
+        label = "Start!",
+        action = function()
+            setup.game = game(setup.track)
+            setup.mode = "game"
+        end
+    })
+    setup.mode = "menu-players"
 end
 
 function love.load()
@@ -51,58 +71,96 @@ function love.load()
 end
 
 function love.update(dt)
-    if curGame and curGame.stopped then
-        curGame = nil
-        mode = "menu-main"
+    if setup.game and setup.game.stopped then
+        setup = {mode = "menu-main"}
     end
-    if mode == "menu-main" then
+    if string.sub(setup.mode, 0, 4) == "menu" then
         menuMain:update(dt)
-    elseif mode == "menu-play" then
-        menuTracks:update(dt)
-    elseif mode == "game" then
-        curGame:update(dt)
+        if string.sub(setup.mode, 0, 9) == "menu-play" then
+            menuPlay:update(dt)
+            if setup.mode == "menu-players" then
+                menuPlayers:update(dt)
+                -- do something cool with joysticks
+            end
+        end
+    elseif setup.mode == "game" then
+        setup.game:update(dt)
     end
 end
 
 function love.draw()
     love.graphics.setColor(128, 128, 128)
     love.graphics.printf(love.timer.getFPS(), love.window.getWidth() - 30, 10, 20, "right")
-    if string.sub(mode, 0, 4) == "menu" then
+    if string.sub(setup.mode, 0, 4) == "menu" then
         love.graphics.setColor(64, 64, 64)
         love.graphics.printf("Beatbit", love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
         love.graphics.setColor(128, 128, 128)
-        menuMain:draw(10, 10, mode == "menu-main")
-    end
-    if mode == "menu-play" then
-        if next(menuTracks.items) == nil then
-            love.graphics.print("No tracks detected!", 120, 14)
-        else
-            menuTracks:draw(120, 10, true)
+        menuMain:draw(10, 10, setup.mode == "menu-main")
+        if string.sub(setup.mode, 0, 9) == "menu-play" then
+            if next(menuPlay.items) == nil then
+                love.graphics.print("No tracks detected!", 120, 14)
+            else
+                menuPlay:draw(120, 10, setup.mode == "menu-play")
+            end
+            if setup.mode == "menu-players" then
+                if next(setup.players) == nil then
+                    love.graphics.print("Keyboard: press Enter to join\nControllers (" .. love.joystick.getJoystickCount() .. " detected): press primary button", 430, 34)
+                else
+                    for i, player in ipairs(setup.players) do
+                        local playerDesc = (player == -1 and "keyboard" or ("controller " .. player))
+                        love.graphics.print("Player " .. i .. ": " .. playerDesc, 430, 19 + (15 * i))
+                    end
+                end
+                menuPlayers:draw(430, 10, not (next(setup.players) == nil))
+            end
         end
-    elseif mode == "game" then
-        curGame:draw()
+    elseif setup.mode == "game" then
+        setup.game:draw()
     end
 end
 
 function love.keypressed(key)
-    if mode == "menu-main" then
-        if key == "escape" then
-            love.event.quit()
-        else
-            menuMain:keypressed(key)
-        end
-    elseif mode == "menu-play" then
-        if key == "escape" or key == "left" then
-            mode = "menu-main"
-            menuTracks.selected = 1
-        elseif next(menuTracks.items) == nil then
-            if key == "up" or key == "down" or key == "right" or key == "return" then
-                soundDeny:play()
+    if setup.mode == "menu-main" then
+        menuMain:keypressed(key)
+    elseif setup.mode == "menu-play" then
+        menuPlay:keypressed(key)
+    elseif setup.mode == "menu-players" then
+        local kbdPlayer = false
+        for i, player in pairs(setup.players) do
+            if player == -1 then
+                kbdPlayer = i
+                break
             end
-        else
-            menuTracks:keypressed(key)
         end
-    elseif mode == "game" then
-        curGame:keypressed(key)
+        if kbdPlayer and (key == "left" or key == "escape") then
+            table.remove(setup.players, kbdPlayer)
+        elseif not kbdPlayer and (key == "right" or key == "return") then
+            table.insert(setup.players, -1)
+        else
+            menuPlayers:keypressed(key)
+        end
+    elseif setup.mode == "game" then
+        setup.game:keypressed(key)
+    end
+end
+
+function love.joystickpressed(joystick, button)
+    if setup.mode == "menu-players" then
+        id = joystick:getID()
+        if button == 1 then
+            for i, player in pairs(setup.players) do
+                if player == id then
+                    return
+                end
+            end
+            table.insert(setup.players, id)
+        elseif button == 2 then
+            for i, player in pairs(setup.players) do
+                if player == id then
+                    table.remove(setup.players, i)
+                    return
+                end
+            end
+        end
     end
 end

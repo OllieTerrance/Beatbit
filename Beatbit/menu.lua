@@ -3,20 +3,22 @@ menu.__index = menu
 
 local soundTick = love.audio.newSource("sound/tick.wav", "static")
 local soundSelect = love.audio.newSource("sound/select.wav", "static")
+local soundDeny = love.audio.newSource("sound/deny.wav", "static")
 
 setmetatable(menu, {
-    __call = function(cls, width)
+    __call = function(cls, width, escape)
         local self = setmetatable({}, cls)
-        self:new(width)
+        self:new(width, escape)
         return self
     end
 })
 
-function menu.new(self, width)
+function menu.new(self, width, escape)
     self.items = {}
     self.selected = 1
     self.animOffset = 0
     self.width = width or 300
+    self.escape = escape
 end
 
 function menu.add(self, item)
@@ -38,7 +40,9 @@ function menu.draw(self, x, y, active)
 end
 
 function menu.keypressed(self, key)
-    if key == "up" then
+    if #self.items == 0 and (key == "up" or key == "down" or key == "return" or key == "right") then
+        soundDeny:play()
+    elseif key == "up" then
         self.animOffset = self.animOffset + (self.selected > 1 and 1 or (1 - #self.items))
         self.selected = ((self.selected - 2) % #self.items) + 1
         soundTick:play()
@@ -51,6 +55,10 @@ function menu.keypressed(self, key)
             self.items[self.selected].action()
             soundSelect:play()
         end
+    elseif self.escape and (key == "left" or key == "escape") then
+        self.selected = 1
+        soundSelect:play()
+        self.escape()
     end
 end
 
