@@ -2,6 +2,18 @@
 
 A 2D rhythm-based game, written in Lua for LÖVE.
 
+## Start
+
+Setup LÖVE if you haven't already (you'll need at least version 0.9.0).  Download [JSON.lua](http://regex.info/code/JSON.lua) and place it inside a `lib` folder.
+
+Run the unpacked app with `.../path/to/love Beatbit`.
+
+## Controls
+
+On a keyboard, arrow keys to move and WASD to fire.
+
+For joysticks, an Xbox controller layout is assumed; right stick to move, d-pad to fire.
+
 ## Tracks
 
 Tracks live in the `tracks` folder.  The structure of a track should look something like the following:
@@ -27,7 +39,3 @@ Inside `track.json`:
 ```
 
 Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.  Use `speeds` to create beat ranges where all movement is accelerated or slowed.
-
-## External
-
-Download [JSON.lua](http://regex.info/code/JSON.lua) and place it inside a `lib` folder.

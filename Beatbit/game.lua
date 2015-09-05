@@ -19,8 +19,9 @@ function game.new(self, track, players)
     self.track = track
     self.music = love.audio.newSource("tracks/" .. self.track.dir .. "/" .. self.track.music)
     self.players = {}
-    for i, id in ipairs(players) do
-        table.insert(self.players, player(id))
+    local colours = {{128, 192, 255}, {255, 128, 128}, {255, 255, 128}, {128, 255, 192}, {192, 192, 192}}
+    for i, joy in ipairs(players) do
+        table.insert(self.players, player(joy, colours[i]))
     end
     self.enemies = {}
     self.bullets = {}
@@ -56,7 +57,7 @@ function game.update(self, dt)
                 if plr:overlaps(enemy) then -- player hit an enemy
                     plr:destroy()
                     for j, bullet in ipairs(self.bullets) do
-                        if not bullet.destroyTTL then -- don't restart existing animations
+                        if bullet.player == plr and not bullet.destroyTTL then -- don't restart existing animations
                             bullet:destroy()
                         end
                     end

@@ -107,11 +107,12 @@ function love.draw()
             end
             if setup.mode == "menu-players" then
                 if next(setup.players) == nil then
-                    love.graphics.print("Keyboard: press Enter to join\nControllers (" .. love.joystick.getJoystickCount() .. " detected): press primary button", 430, 34)
+                    love.graphics.print("Keyboard: press Enter to join\nControllers ("
+                            .. love.joystick.getJoystickCount() .. " detected): press primary button", 430, 34)
                 else
-                    for i, player in ipairs(setup.players) do
-                        local playerDesc = (player == -1 and "keyboard" or ("controller " .. player))
-                        love.graphics.print("Player " .. i .. ": " .. playerDesc, 430, 19 + (15 * i))
+                    for i, joy in ipairs(setup.players) do
+                        local player = (joy == true and "keyboard" or ("controller [" .. joy:getName() .. "]"))
+                        love.graphics.print("Player " .. i .. ": " .. player, 430, 19 + (15 * i))
                     end
                 end
                 menuPlayers:draw(430, 10, not (next(setup.players) == nil))
@@ -129,8 +130,8 @@ function love.keypressed(key)
         menuPlay:keypressed(key)
     elseif setup.mode == "menu-players" then
         local kbdPlayer = false
-        for i, player in ipairs(setup.players) do
-            if player == -1 then
+        for i, joy in ipairs(setup.players) do
+            if joy == true then
                 kbdPlayer = i
                 break
             end
@@ -138,7 +139,7 @@ function love.keypressed(key)
         if kbdPlayer and (key == "left" or key == "escape") then
             table.remove(setup.players, kbdPlayer)
         elseif not kbdPlayer and (key == "right" or key == "return") then
-            table.insert(setup.players, -1)
+            table.insert(setup.players, true) -- instead of a Joystick table
         else
             menuPlayers:keypressed(key)
         end
@@ -147,19 +148,20 @@ function love.keypressed(key)
     end
 end
 
-function love.joystickpressed(joystick, button)
+function love.gamepadpressed(joystick, button)
     if setup.mode == "menu-players" then
         id = joystick:getID()
-        if button == 1 then
-            for i, player in ipairs(setup.players) do
-                if player == id then
+        if button == "a" then
+            for i, joy in ipairs(setup.players) do
+                if not (joy == true) and joy:getID() == id then
+                    menuPlayers:keypressed("return")
                     return
                 end
             end
-            table.insert(setup.players, id)
-        elseif button == 2 then
-            for i, player in ipairs(setup.players) do
-                if player == id then
+            table.insert(setup.players, joystick)
+        elseif button == "b" then
+            for i, joy in ipairs(setup.players) do
+                if joy:getID() == id then
                     table.remove(setup.players, i)
                     return
                 end

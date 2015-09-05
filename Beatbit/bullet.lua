@@ -13,7 +13,7 @@ setmetatable(bullet, {
 })
 
 function bullet.new(self, sX, sY, sBearing, plr)
-    entity.new(self, "fill", {192, 224, 255})
+    entity.new(self, "fill", plr.colour)
     self.x = sX
     self.y = sY
     self.size = 10
