@@ -5,6 +5,8 @@ io.stdout:setvbuf("no")
 
 local soundDeny = love.audio.newSource("sound/deny.wav", "static")
 
+local colours = {{128, 192, 255}, {255, 128, 128}, {255, 255, 128}, {128, 255, 192}, {192, 192, 192}}
+
 function loadTracks()
     tracks = {}
     local dir = love.filesystem.getDirectoryItems("tracks")
@@ -106,16 +108,17 @@ function love.draw()
                 menuPlay:draw(120, 10, setup.mode == "menu-play")
             end
             if setup.mode == "menu-players" then
+                menuPlayers:draw(430, 10, not (next(setup.players) == nil))
                 if next(setup.players) == nil then
                     love.graphics.print("Keyboard: press Enter to join\nControllers ("
                             .. love.joystick.getJoystickCount() .. " detected): press primary button", 430, 34)
                 else
                     for i, joy in ipairs(setup.players) do
+                        love.graphics.setColor(unpack(colours[((i - 1) % #colours) + 1]))
                         local player = (joy == true and "keyboard" or ("controller [" .. joy:getName() .. "]"))
                         love.graphics.print("Player " .. i .. ": " .. player, 430, 19 + (15 * i))
                     end
                 end
-                menuPlayers:draw(430, 10, not (next(setup.players) == nil))
             end
         end
     elseif setup.mode == "game" then
@@ -136,9 +139,9 @@ function love.keypressed(key)
                 break
             end
         end
-        if kbdPlayer and (key == "left" or key == "escape") then
+        if kbdPlayer and (key == "left" or key == "backspace" or key == "escape") then
             table.remove(setup.players, kbdPlayer)
-        elseif not kbdPlayer and (key == "right" or key == "return") then
+        elseif not kbdPlayer and (key == "right" or key == "return" or key == " ") then
             table.insert(setup.players, true) -- instead of a Joystick table
         else
             menuPlayers:keypressed(key)

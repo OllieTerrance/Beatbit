@@ -4,6 +4,8 @@ enemy = require("enemy")
 local soundBuzz = love.audio.newSource("sound/buzz.wav", "static")
 local soundHit = love.audio.newSource("sound/hit.wav", "static")
 
+local colours = {{128, 192, 255}, {255, 128, 128}, {255, 255, 128}, {128, 255, 192}, {192, 192, 192}}
+
 local game = {}
 game.__index = game
 
@@ -19,9 +21,8 @@ function game.new(self, track, players)
     self.track = track
     self.music = love.audio.newSource("tracks/" .. self.track.dir .. "/" .. self.track.music)
     self.players = {}
-    local colours = {{128, 192, 255}, {255, 128, 128}, {255, 255, 128}, {128, 255, 192}, {192, 192, 192}}
     for i, joy in ipairs(players) do
-        table.insert(self.players, player(joy, colours[i]))
+        table.insert(self.players, player(joy, colours[((i - 1) % #colours) + 1]))
     end
     self.enemies = {}
     self.bullets = {}
@@ -123,12 +124,12 @@ function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
     love.graphics.setColor(128, 128, 128)
     love.graphics.print(self.beat, 10, 10)
-    love.graphics.setColor(128, 192, 255)
-    love.graphics.print(self.players[1].score, 10, love.window.getHeight() - 25)
-    love.graphics.setColor(192, 64, 64)
-    love.graphics.printf(self.players[1].deaths, love.window.getWidth() - 30, love.window.getHeight() - 25, 20, "right")
+    love.graphics.print("Scores", 10, love.window.getHeight() - 30 - (15 * #self.players))
+    love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
     for i, plr in ipairs(self.players) do
         plr:draw()
+        love.graphics.print(plr.score, 10, love.window.getHeight() - 25 - (15 * (#self.players - i)))
+        love.graphics.printf(plr.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25 - (15 * (#self.players - i)), 20, "right")
     end
     for i, enemy in ipairs(self.enemies) do
         enemy:draw()

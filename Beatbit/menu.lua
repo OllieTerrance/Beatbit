@@ -40,7 +40,7 @@ function menu.draw(self, x, y, active)
 end
 
 function menu.keypressed(self, key)
-    if #self.items == 0 and (key == "up" or key == "down" or key == "return" or key == "right") then
+    if #self.items == 0 and (key == "up" or key == "down" or key == "right" or key == "return" or key == " ") then
         soundDeny:play()
     elseif key == "up" then
         self.animOffset = self.animOffset + (self.selected > 1 and 1 or (1 - #self.items))
@@ -50,12 +50,12 @@ function menu.keypressed(self, key)
         self.animOffset = self.animOffset - (self.selected < #self.items and 1 or (1 - #self.items))
         self.selected = (self.selected % #self.items) + 1
         soundTick:play()
-    elseif key == "return" or key == "right" then
+    elseif key == "right" or key == "return" or key == " " then
         if self.items[self.selected].action then
             self.items[self.selected].action()
             soundSelect:play()
         end
-    elseif self.escape and (key == "left" or key == "escape") then
+    elseif self.escape and (key == "left" or key == "backspace" or key == "escape") then
         self.selected = 1
         soundSelect:play()
         self.escape()
