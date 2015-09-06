@@ -30,6 +30,36 @@ function loadTracks()
     end
 end
 
+menuWinSize = menu(100, function()
+    setup.mode = "menu-main"
+end)
+menuWinSize:add({
+    label = "Full screen",
+    action = function()
+        local width, height = love.window.getDesktopDimensions()
+        love.window.setMode(width, height, { -- must set vsync/fullscreen each time, not remembered from love.conf
+            fullscreen = true,
+            fullscreentype = "desktop",
+            vsync = false
+        })
+        setup.mode = "menu-main"
+    end
+})
+for i, mode in ipairs(love.window.getFullscreenModes()) do -- common resolutions
+    if mode.width >= 640 and mode.height >= 480 then
+        menuWinSize:add({
+            label = mode.width .. "x" .. mode.height,
+            action = function()
+                love.window.setMode(mode.width, mode.height, {
+                    fullscreen = false,
+                    vsync = false
+                })
+                setup.mode = "menu-main"
+            end
+        })
+    end
+end
+
 menuMain = menu(100, love.event.quit)
 menuMain:add({
     label = "Play!",
@@ -40,6 +70,22 @@ menuMain:add({
 menuMain:add({
     label = "Reload tracks",
     action = loadTracks
+})
+menuMain:add({
+    label = "Window size",
+    action = function()
+        if love.window.getFullscreen() then
+            menuWinSize.selected = 1
+        else
+            for i, item in ipairs(menuWinSize.items) do
+                if item.label == love.window.getWidth() .. "x" .. love.window.getHeight() then
+                    menuWinSize.selected = i
+                    break
+                end
+            end
+        end
+        setup.mode = "menu-winsize"
+    end
 })
 menuMain:add({
     label = "Quit",
@@ -87,6 +133,8 @@ function love.update(dt)
                 menuPlayers:update(dt)
                 -- do something cool with joysticks
             end
+        elseif setup.mode == "menu-winsize" then
+            menuWinSize:update(dt)
         end
     elseif setup.mode == "game" then
         setup.game:update(dt)
@@ -120,6 +168,8 @@ function love.draw()
                     end
                 end
             end
+        elseif setup.mode == "menu-winsize" then
+            menuWinSize:draw(120, 10, true)
         end
     elseif setup.mode == "game" then
         setup.game:draw()
@@ -128,7 +178,9 @@ end
 
 function love.keypressed(key)
     if setup.mode == "menu-main" then
-        menuMain:keypressed(key)
+        if not (key == "left" or key == "backspace") then
+            menuMain:keypressed(key)
+        end
     elseif setup.mode == "menu-play" then
         menuPlay:keypressed(key)
     elseif setup.mode == "menu-players" then
@@ -141,11 +193,13 @@ function love.keypressed(key)
         end
         if kbdPlayer and (key == "left" or key == "backspace" or key == "escape") then
             table.remove(setup.players, kbdPlayer)
-        elseif not kbdPlayer and (key == "right" or key == "return" or key == " ") then
+        elseif not kbdPlayer and (key == "return" or key == " ") then
             table.insert(setup.players, true) -- instead of a Joystick table
-        else
+        elseif not (key == "right") then
             menuPlayers:keypressed(key)
         end
+    elseif setup.mode == "menu-winsize" then
+        menuWinSize:keypressed(key)
     elseif setup.mode == "game" then
         setup.game:keypressed(key)
     end
