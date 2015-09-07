@@ -28,10 +28,50 @@ function game.new(self, track, players)
     self.bullets = {}
     self.beat = 0
     self.bgColour = 0
+    self.menuPause = menu(100, function()
+        self.pause = false
+        self.music:play()
+    end)
+    self.menuPause:add({
+        label = "Continue",
+        action = function()
+            self.pause = false
+            self.music:play()
+        end
+    })
+    self.menuPause:add({
+        label = "Restart",
+        action = function()
+            for i, plr in ipairs(self.players) do
+                plr.x = math.random(plr.size / 2, love.window.getWidth() - (plr.size / 2))
+                plr.y = math.random(plr.size / 2, love.window.getHeight() - (plr.size / 2))
+                plr.score = 0
+                plr.deaths = 0
+            end
+            self.enemies = {}
+            self.bullets = {}
+            self.beat = 0
+            self.bgColour = 0
+            self.music:rewind()
+            self.pause = false
+            self.music:play()
+        end
+    })
+    self.menuPause:add({
+        label = "Quit",
+        action = function()
+            love.graphics.setBackgroundColor(0, 0, 0)
+            self.stopped = true
+        end
+    })
     self.music:play()
 end
 
 function game.update(self, dt)
+    if self.pause then
+        self.menuPause:update(dt)
+        return
+    end
     local pos = self.music:tell() - self.track.start
     if pos < 0 then -- waiting for first beat
         return
@@ -39,7 +79,7 @@ function game.update(self, dt)
     local prog = pos % (60 / self.track.bpm) -- amount of time into the current beat
     local beat = math.floor(pos / (60 / self.track.bpm))
     local newBeat = (beat > self.beat)
-    self.beat = beat
+    self.beat = math.max(beat, self.beat) -- avoid occasional backward steps in time
     local speed = self.track.bpm / 120
     for i, speedVars in ipairs(self.track.speeds) do
         low, high, mod = unpack(speedVars)
@@ -140,13 +180,23 @@ function game.draw(self)
     for i, bullet in ipairs(self.bullets) do
         bullet:draw()
     end
+    if self.pause then
+        love.graphics.setColor(0, 0, 0, 128)
+        love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
+        self.menuPause:draw(10, 10)
+    end
 end
 
 function game.keypressed(self, key)
-    if key == "escape" then
+    if self.pause then
+        self.menuPause:keypressed(key)
+    elseif self.ended and key == "escape" then
         self.music:stop()
         love.graphics.setBackgroundColor(0, 0, 0)
         self.stopped = true
+    elseif key == "escape" then
+        self.pause = true
+        self.music:pause()
     end
 end
 

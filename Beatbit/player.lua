@@ -16,9 +16,9 @@ setmetatable(player, {
 function player.new(self, joy, colour)
     entity.new(self, "fill", colour)
     self.joy = joy
-    self.x = math.random(0, love.window.getWidth())
-    self.y = math.random(0, love.window.getHeight())
     self.size = 20
+    self.x = math.random(self.size / 2, love.window.getWidth() - (self.size / 2))
+    self.y = math.random(self.size / 2, love.window.getHeight() - (self.size / 2))
     self.speed = 400
     self.score = 0
     self.deaths = 0
