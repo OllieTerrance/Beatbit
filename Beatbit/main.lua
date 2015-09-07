@@ -60,7 +60,7 @@ for i, mode in ipairs(love.window.getFullscreenModes()) do -- common resolutions
     end
 end
 
-menuMain = menu(100, love.event.quit)
+menuMain = menu(100)
 menuMain:add({
     label = "Play!",
     action = function()
@@ -178,9 +178,7 @@ end
 
 function love.keypressed(key)
     if setup.mode == "menu-main" then
-        if not (key == "left" or key == "backspace") then
-            menuMain:keypressed(key)
-        end
+        menuMain:keypressed(key)
     elseif setup.mode == "menu-play" then
         menuPlay:keypressed(key)
     elseif setup.mode == "menu-players" then
@@ -206,23 +204,34 @@ function love.keypressed(key)
 end
 
 function love.gamepadpressed(joystick, button)
-    if setup.mode == "menu-players" then
+    if setup.mode == "menu-main" then
+        menuMain:gamepadpressed(joystick, button)
+    elseif setup.mode == "menu-play" then
+        menuPlay:gamepadpressed(joystick, button)
+    elseif setup.mode == "menu-players" then
         id = joystick:getID()
         if button == "a" then
             for i, joy in ipairs(setup.players) do
                 if not (joy == true) and joy:getID() == id then
-                    menuPlayers:keypressed("return")
+                    menuPlayers:gamepadpressed(joystick, button)
                     return
                 end
             end
             table.insert(setup.players, joystick)
-        elseif button == "b" then
+        elseif button == "b" or button == "dpleft" then
             for i, joy in ipairs(setup.players) do
-                if joy:getID() == id then
+                if not (joy == true) and joy:getID() == id then
                     table.remove(setup.players, i)
                     return
                 end
             end
+            menuPlayers:gamepadpressed(joystick, button)
+        elseif not (button == "dpright") then
+            menuPlayers:gamepadpressed(joystick, button)
         end
+    elseif setup.mode == "menu-winsize" then
+        menuWinSize:gamepadpressed(joystick, button)
+    elseif setup.mode == "game" then
+        setup.game:gamepadpressed(key)
     end
 end

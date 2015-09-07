@@ -40,7 +40,9 @@ function menu.draw(self, x, y, active)
 end
 
 function menu.keypressed(self, key)
-    if #self.items == 0 and (key == "up" or key == "down" or key == "right" or key == "return" or key == " ") then
+    if #self.items <= 1 and (key == "up" or key == "down") then
+        soundDeny:play()
+    elseif #self.items == 0 and (key == "right" or key == "return" or key == " ") then
         soundDeny:play()
     elseif key == "up" then
         self.animOffset = self.animOffset + (self.selected > 1 and 1 or (1 - #self.items))
@@ -56,6 +58,31 @@ function menu.keypressed(self, key)
             soundSelect:play()
         end
     elseif self.escape and (key == "left" or key == "backspace" or key == "escape") then
+        self.selected = 1
+        soundSelect:play()
+        self.escape()
+    end
+end
+
+function menu.gamepadpressed(self, joystick, button)
+    if #self.items <= 1 and (button == "dpup" or button == "dpdown") then
+        soundDeny:play()
+    elseif #self.items == 0 and (button == "dpright" or button == "start" or button == "a") then
+        soundDeny:play()
+    elseif button == "dpup" then
+        self.animOffset = self.animOffset + (self.selected > 1 and 1 or (1 - #self.items))
+        self.selected = ((self.selected - 2) % #self.items) + 1
+        soundTick:play()
+    elseif button == "dpdown" then
+        self.animOffset = self.animOffset - (self.selected < #self.items and 1 or (1 - #self.items))
+        self.selected = (self.selected % #self.items) + 1
+        soundTick:play()
+    elseif button == "dpright" or button == "start" or button == "a" then
+        if self.items[self.selected].action then
+            self.items[self.selected].action()
+            soundSelect:play()
+        end
+    elseif self.escape and (button == "dpleft" or button == "back" or button == "b") then
         self.selected = 1
         soundSelect:play()
         self.escape()

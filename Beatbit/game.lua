@@ -190,11 +190,24 @@ end
 function game.keypressed(self, key)
     if self.pause then
         self.menuPause:keypressed(key)
-    elseif self.ended and key == "escape" then
+    elseif self.ended and (key == "escape" or key == "return") then
         self.music:stop()
         love.graphics.setBackgroundColor(0, 0, 0)
         self.stopped = true
     elseif key == "escape" then
+        self.pause = true
+        self.music:pause()
+    end
+end
+
+function game.gamepadpressed(self, joystick, button)
+    if self.pause then
+        self.menuPause:gamepadpressed(button)
+    elseif self.ended and button == "back" then
+        self.music:stop()
+        love.graphics.setBackgroundColor(0, 0, 0)
+        self.stopped = true
+    elseif button == "start" then
         self.pause = true
         self.music:pause()
     end
