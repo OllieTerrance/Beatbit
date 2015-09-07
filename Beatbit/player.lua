@@ -27,30 +27,29 @@ end
 function player.update(self, dt, newBeat)
     entity.update(self, dt)
     if not self.destroyTTL then
+        local move = dt * self.speed
         if self.joy == true then -- keyboard
             if love.keyboard.isDown("up") then
-                self.y = self.y - (dt * self.speed)
+                self.y = self.y - move
             end
             if love.keyboard.isDown("down") then
-                self.y = self.y + (dt * self.speed)
+                self.y = self.y + move
             end
             if love.keyboard.isDown("left") then
-                self.x = self.x - (dt * self.speed)
+                self.x = self.x - move
             end
             if love.keyboard.isDown("right") then
-                self.x = self.x + (dt * self.speed)
+                self.x = self.x + move
             end
         else
-            local sensitivity = 0.3 -- higher = larger offset needed
-            if self.joy:getGamepadAxis("righty") < - sensitivity then
-                self.y = self.y - (dt * self.speed)
-            elseif self.joy:getGamepadAxis("righty") > sensitivity then
-                self.y = self.y + (dt * self.speed)
+            local deadZone = 0.2 -- higher = larger offset needed
+            local x = self.joy:getGamepadAxis("rightx")
+            local y = self.joy:getGamepadAxis("righty")
+            if math.abs(y) > deadZone then
+                self.y = self.y + (move * (y - (deadZone * (y > 0 and 1 or -1)) * (1 + deadZone))) -- normalise [deadZone, 1] to [0, 1]
             end
-            if self.joy:getGamepadAxis("rightx") < - sensitivity then
-                self.x = self.x - (dt * self.speed)
-            elseif self.joy:getGamepadAxis("rightx") > sensitivity then
-                self.x = self.x + (dt * self.speed)
+            if math.abs(x) > deadZone then
+                self.x = self.x + (move * (x - (deadZone * (x > 0 and 1 or -1)) * (1 + deadZone))) -- normalise [deadZone, 1] to [0, 1]
             end
         end
         self.x = math.max(self.size / 2, math.min(love.window.getWidth() - (self.size / 2), self.x))
@@ -58,24 +57,18 @@ function player.update(self, dt, newBeat)
         if newBeat and not (dt == 0) then -- don't create bullets on pauses
             if self.joy == true then -- keyboard
                 if love.keyboard.isDown("w") then
-                    return bullet(self.x, self.y, "n", self)
+                    return bullet(self.x, self.y, "u", self)
                 elseif love.keyboard.isDown("s") then
-                    return bullet(self.x, self.y, "s", self)
+                    return bullet(self.x, self.y, "d", self)
                 elseif love.keyboard.isDown("a") then
-                    return bullet(self.x, self.y, "w", self)
+                    return bullet(self.x, self.y, "l", self)
                 elseif love.keyboard.isDown("d") then
-                    return bullet(self.x, self.y, "e", self)
+                    return bullet(self.x, self.y, "r", self)
                 end
             else
-                local hat = self.joy:getHat(1)
-                if hat == "u" then
-                    return bullet(self.x, self.y, "n", self)
-                elseif hat == "d" then
-                    return bullet(self.x, self.y, "s", self)
-                elseif hat == "l" then
-                    return bullet(self.x, self.y, "w", self)
-                elseif hat == "r" then
-                    return bullet(self.x, self.y, "e", self)
+                local hat = string.sub(self.joy:getHat(1), -1) -- last char of direction (prefer up/down on diagonals)
+                if not (hat == "c") then
+                    return bullet(self.x, self.y, hat, self)
                 end
             end
         end

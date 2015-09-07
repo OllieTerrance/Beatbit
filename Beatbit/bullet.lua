@@ -5,30 +5,30 @@ bullet.__index = bullet
 
 setmetatable(bullet, {
     __index = entity,
-    __call = function(cls, sX, sY, sBearing, plr)
+    __call = function(cls, x, y, direct, plr)
         local self = setmetatable({}, cls)
-        self:new(sX, sY, sBearing, plr)
+        self:new(x, y, direct, plr)
         return self
     end
 })
 
-function bullet.new(self, sX, sY, sBearing, plr)
+function bullet.new(self, x, y, direct, plr)
     entity.new(self, "fill", plr.colour)
-    self.x = sX
-    self.y = sY
+    self.x = x
+    self.y = y
     self.size = 10
     self.speed = 400
-    self.bearing = sBearing
+    self.direct = direct
     self.player = plr
 end
 
 function bullet.update(self, dt)
     entity.update(self, dt)
     if not self.destroyTTL then
-        if self.bearing == "n" or self.bearing == "s" then
-            self.y = self.y + ((self.bearing == "s" and 1 or -1) * dt * self.speed)
+        if self.direct == "u" or self.direct == "d" then
+            self.y = self.y + ((self.direct == "d" and 1 or -1) * dt * self.speed)
         else
-            self.x = self.x + ((self.bearing == "e" and 1 or -1) * dt * self.speed)
+            self.x = self.x + ((self.direct == "r" and 1 or -1) * dt * self.speed)
         end
     end
 end

@@ -105,6 +105,9 @@ function game.update(self, dt)
             for i, enemy in ipairs(self.enemies) do
                 enemy:destroy()
             end
+            for i, bullet in ipairs(self.bullets) do
+                bullet:destroy()
+            end
             self.ended = true
         end
         return
@@ -123,7 +126,7 @@ end
 function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
     love.graphics.setColor(128, 128, 128)
-    love.graphics.print(self.beat, 10, 10)
+    love.graphics.print(math.min(self.beat, self.track.length), 10, 10)
     love.graphics.print("Scores", 10, love.window.getHeight() - 30 - (15 * #self.players))
     love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
     for i, plr in ipairs(self.players) do

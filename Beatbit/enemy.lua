@@ -15,21 +15,21 @@ setmetatable(enemy, {
 function enemy.new(self, players)
     entity.new(self, "line", {192, 192, 192})
     self.size = math.random(20, 60)
-    local sX, sY
+    local x, y
     local tooClose = true
     while tooClose do
         tooClose = false
-        sX = math.random(0, love.window.getWidth())
-        sY = math.random(0, love.window.getHeight())
+        x = math.random(0, love.window.getWidth())
+        y = math.random(0, love.window.getHeight())
         for i, plr in ipairs(players) do
-            if math.abs(sX - plr.x) < self.size + 10 and math.abs(sY - plr.y) < self.size + 10 then
+            if math.abs(x - plr.x) < self.size + 10 and math.abs(y - plr.y) < self.size + 10 then
                 tooClose = true
                 break
             end
         end
     end
-    self.x = sX
-    self.y = sY
+    self.x = x
+    self.y = y
     self.xSpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
     self.ySpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
 end
