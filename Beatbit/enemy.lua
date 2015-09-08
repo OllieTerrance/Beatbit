@@ -14,7 +14,7 @@ setmetatable(enemy, {
 
 function enemy.new(self, players)
     entity.new(self, "line", {192, 192, 192})
-    self.size = math.random(20, 60)
+    self.size = math.random(20, 80)
     local x, y
     local tooClose = true
     while tooClose do

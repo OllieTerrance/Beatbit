@@ -144,7 +144,7 @@ function game.update(self, dt)
                 if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
                     table.remove(self.bullets, i)
                     enemy:destroy()
-                    bullet.player.score = bullet.player.score + 1
+                    bullet.player.score = bullet.player.score + 50 - math.floor(enemy.size / 2) -- size 20 = score 50, size 100 = score 10
                     soundBuzz:play()
                 end
             end
