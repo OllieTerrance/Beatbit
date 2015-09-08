@@ -21,6 +21,8 @@ function player.new(self, joy, colour)
     self.y = math.random(self.size / 2, love.window.getHeight() - (self.size / 2))
     self.speed = 200
     self.score = 0
+    self.shots = 0
+    self.hits = 0
     self.deaths = 0
 end
 

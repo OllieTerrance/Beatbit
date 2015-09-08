@@ -109,6 +109,7 @@ function game.update(self, dt)
             for i, plr in ipairs(self.players) do
                 if not plr.respawnTTL and plr:overlaps(enemy) then -- player hit an enemy
                     plr:destroy()
+                    plr.deaths = plr.deaths + 1
                     for j, bullet in ipairs(self.bullets) do
                         if bullet.player == plr and not bullet.destroyTTL then -- don't restart existing animations
                             bullet:destroy()
@@ -126,7 +127,6 @@ function game.update(self, dt)
         if plr.destroyTTL then -- player destroy animation playing
             if plr.destroyTTL < 0 then
                 plr.destroyTTL = nil
-                plr.deaths = plr.deaths + 1
                 return
             else
                 plr:update(dt * speed)
@@ -144,6 +144,7 @@ function game.update(self, dt)
                 if not enemy.destroyTTL and bullet:overlaps(enemy) then -- bullet hit an enemy
                     table.remove(self.bullets, i)
                     enemy:destroy()
+                    bullet.player.hits = bullet.player.hits + 1
                     bullet.player.score = bullet.player.score + 50 - math.floor(enemy.size / 2) -- size 20 = score 50, size 100 = score 10
                     soundBuzz:play()
                 end
@@ -154,6 +155,10 @@ function game.update(self, dt)
     end
     if self.beat >= self.track.length then -- end of song
         if not self.ended then
+            for i, plr in ipairs(self.players) do
+                plr:destroy()
+                plr.respawnTTL = nil
+            end
             for i, enemy in ipairs(self.enemies) do
                 enemy:destroy()
             end
@@ -169,6 +174,7 @@ function game.update(self, dt)
     for i, plr in ipairs(self.players) do
         local bullet = plr:update(dt * speed, onBeat) -- player update returns a new bullet if created
         if bullet then
+            plr.shots = plr.shots + 1
             table.insert(self.bullets, bullet)
         end
     end
@@ -178,21 +184,10 @@ end
 function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
     love.graphics.setColor(128, 128, 128)
-    love.graphics.print(math.floor(math.min(self.beat, self.track.length)), 10, 10)
-    love.graphics.print("Scores", 10, love.window.getHeight() - 30 - (15 * #self.players))
-    love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
     for i, plr in ipairs(self.players) do
-        plr:draw()
-        local colour = plr.colour
-        if plr.destroyTTL or plr.respawnTTL then
-            colour = {}
-            for i, val in ipairs(plr.colour) do
-                table.insert(colour, val / 3)
-            end
+        if not self.ended or plr.destroyTTL then -- don't draw at game over after destroy
+            plr:draw()
         end
-        love.graphics.setColor(colour)
-        love.graphics.print(plr.score, 10, love.window.getHeight() - 25 - (15 * (#self.players - i)))
-        love.graphics.printf(plr.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25 - (15 * (#self.players - i)), 20, "right")
     end
     for i, enemy in ipairs(self.enemies) do
         enemy:draw()
@@ -200,10 +195,39 @@ function game.draw(self)
     for i, bullet in ipairs(self.bullets) do
         bullet:draw()
     end
-    if self.pause then
-        love.graphics.setColor(0, 0, 0, 128)
-        love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
-        self.menuPause:draw(10, 10)
+    love.graphics.setColor(128, 128, 128)
+    if self.ended then
+        love.graphics.print("Scores", 10, 10)
+        love.graphics.print("Deaths", 60, 10)
+        love.graphics.print("Accuracy", 115, 10)
+        for i, plr in ipairs(self.players) do
+            love.graphics.setColor(plr.colour)
+            love.graphics.print(plr.score, 10, 12 + (15 * i))
+            love.graphics.print(plr.deaths, 60, 12 + (15 * i))
+            local accuracy = (100 * (plr.hits / plr.shots)) + 0.5
+            love.graphics.print(math.floor(accuracy) .. "% (" .. plr.hits .. " / " .. plr.shots .. ")", 115, 12 + (15 * i))
+        end
+    else
+        love.graphics.print(math.floor(math.min(self.beat, self.track.length)), 10, 10)
+        love.graphics.print("Scores", 10, love.window.getHeight() - 30 - (15 * #self.players))
+        love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
+        for i, plr in ipairs(self.players) do
+            local colour = plr.colour
+            if plr.respawnTTL then
+                colour = {}
+                for i, val in ipairs(plr.colour) do
+                    table.insert(colour, val / 3)
+                end
+            end
+            love.graphics.setColor(colour)
+            love.graphics.print(plr.score, 10, love.window.getHeight() - 25 - (15 * (#self.players - i)))
+            love.graphics.printf(plr.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25 - (15 * (#self.players - i)), 20, "right")
+        end
+        if self.pause then
+            love.graphics.setColor(0, 0, 0, 128)
+            love.graphics.rectangle("fill", 0, 0, love.window.getWidth(), love.window.getHeight())
+            self.menuPause:draw(10, 10)
+        end
     end
 end
 
