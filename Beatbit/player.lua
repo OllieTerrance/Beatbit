@@ -24,8 +24,22 @@ function player.new(self, joy, colour)
     self.deaths = 0
 end
 
+function player.destroy(self)
+    entity.destroy(self)
+    self.respawnTTL = 2
+    self.drawMode = "line"
+end
+
 function player.update(self, dt, newBeat)
     entity.update(self, dt)
+    if self.respawnTTL then
+        if self.respawnTTL > math.abs(dt) then
+            self.respawnTTL = self.respawnTTL - math.abs(dt)
+        else
+            self.respawnTTL = nil
+            self.drawMode = "fill"
+        end
+    end
     if not self.destroyTTL then
         local move = dt * self.speed
         if self.joy == true then -- keyboard
@@ -54,7 +68,7 @@ function player.update(self, dt, newBeat)
         end
         self.x = math.max(self.size / 2, math.min(love.window.getWidth() - (self.size / 2), self.x))
         self.y = math.max(self.size / 2, math.min(love.window.getHeight() - (self.size / 2), self.y))
-        if newBeat and not (dt == 0) then -- don't create bullets on pauses
+        if newBeat and not (dt == 0) and not self.respawnTTL then -- don't create bullets on pauses
             if self.joy == true then -- keyboard
                 if love.keyboard.isDown("w") then
                     return bullet(self.x, self.y, "u", self)

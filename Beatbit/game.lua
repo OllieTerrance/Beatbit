@@ -88,14 +88,14 @@ function game.update(self, dt)
             break
         end
     end
-    for i = #self.enemies, 1, -1 do -- update all enemies
+    for i = #self.enemies, 1, -1 do
         local enemy = self.enemies[i]
         enemy:update(dt * speed)
         if enemy.destroyTTL and enemy.destroyTTL < 0 then -- destroy animation finished
             table.remove(self.enemies, i)
         elseif enemy:visible() then
             for i, plr in ipairs(self.players) do
-                if plr:overlaps(enemy) then -- player hit an enemy
+                if not plr.respawnTTL and plr:overlaps(enemy) then -- player hit an enemy
                     plr:destroy()
                     for j, bullet in ipairs(self.bullets) do
                         if bullet.player == plr and not bullet.destroyTTL then -- don't restart existing animations
@@ -111,7 +111,7 @@ function game.update(self, dt)
         end
     end
     for i, plr in ipairs(self.players) do
-        if plr.destroyTTL then -- player respawning
+        if plr.destroyTTL then -- player destroy animation playing
             if plr.destroyTTL < 0 then
                 plr.destroyTTL = nil
                 plr.deaths = plr.deaths + 1
@@ -121,7 +121,7 @@ function game.update(self, dt)
             end
         end
     end
-    for i = #self.bullets, 1, -1 do -- update all bullets
+    for i = #self.bullets, 1, -1 do
         local bullet = self.bullets[i]
         bullet:update(dt * speed)
         if bullet.destroyTTL and bullet.destroyTTL < 0 then -- destroy animation finished
@@ -171,6 +171,14 @@ function game.draw(self)
     love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
     for i, plr in ipairs(self.players) do
         plr:draw()
+        local colour = plr.colour
+        if plr.destroyTTL or plr.respawnTTL then
+            colour = {}
+            for i, val in ipairs(plr.colour) do
+                table.insert(colour, val / 3)
+            end
+        end
+        love.graphics.setColor(colour)
         love.graphics.print(plr.score, 10, love.window.getHeight() - 25 - (15 * (#self.players - i)))
         love.graphics.printf(plr.deaths, love.window.getWidth() - 30, love.window.getHeight() - 25 - (15 * (#self.players - i)), 20, "right")
     end
