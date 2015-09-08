@@ -30,8 +30,8 @@ function enemy.new(self, players)
     end
     self.x = x
     self.y = y
-    self.xSpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
-    self.ySpeed = (math.random() + 0.05) * 75 * (math.random(2) - 1.5)
+    self.xSpeed = (math.random() + 0.05) * 50 * (math.random(2) - 1.5)
+    self.ySpeed = (math.random() + 0.05) * 50 * (math.random(2) - 1.5)
 end
 
 function enemy.update(self, dt)

@@ -13,8 +13,9 @@ function loadTracks()
     for i, file in ipairs(dir) do
         if love.filesystem.isDirectory("tracks/" .. file)
         and love.filesystem.isFile("tracks/" .. file .. "/track.json") then
-            tracks[file] = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
-            tracks[file].dir = file
+            track = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
+            track.dir = file
+            tracks[file] = track
         end
     end
     menuPlay = menu(300, function()

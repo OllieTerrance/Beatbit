@@ -76,16 +76,28 @@ function game.update(self, dt)
     if pos < 0 then -- waiting for first beat
         return
     end
-    local prog = pos % (60 / self.track.bpm) -- amount of time into the current beat
-    local beat = math.floor(pos / (60 / self.track.bpm))
-    local newBeat = (beat > self.beat)
-    self.beat = math.max(beat, self.beat) -- avoid occasional backward steps in time
-    local speed = self.track.bpm / 120
-    for i, speedVars in ipairs(self.track.speeds) do
-        low, high, mod = unpack(speedVars)
-        if beat >= low and beat < high then
-            speed = speed * mod
-            break
+    local bpm = self.track.bpm
+    if type(self.track.bpm) == "table" then -- multiple bpms, loop through to find current
+        bpm = self.track.bpm[1][2] -- in case bpm not defined at beat 0, use the first known bpm
+        for i, bpmLine in ipairs(self.track.bpm) do
+            blBeat, blBpm = unpack(bpmLine)
+            if blBeat <= self.beat then
+                bpm = blBpm
+            else -- gone too far, stop looking (and take previous value)
+                break
+            end
+        end
+    end
+    local newBeat = self.beat + ((dt * bpm) / 60)
+    local onBeat = math.floor(newBeat) > math.floor(self.beat)
+    self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
+    local speed = bpm / 60
+    if self.track.speed then
+        for i, speedLine in ipairs(self.track.speed) do
+            low, high, mod = unpack(speedLine)
+            if self.beat >= low and self.beat < high then
+                speed = speed * mod
+            end
         end
     end
     for i = #self.enemies, 1, -1 do
@@ -140,7 +152,7 @@ function game.update(self, dt)
             table.remove(self.bullets, i)
         end
     end
-    if beat >= self.track.length then -- end of song
+    if self.beat >= self.track.length then -- end of song
         if not self.ended then
             for i, enemy in ipairs(self.enemies) do
                 enemy:destroy()
@@ -151,22 +163,22 @@ function game.update(self, dt)
             self.ended = true
         end
         return
-    elseif newBeat then -- start of next beat, spawn an enemy
+    elseif onBeat then -- start of next beat, spawn an enemy
         table.insert(self.enemies, enemy(self.players))
     end
     for i, plr in ipairs(self.players) do
-        local bullet = plr:update(dt * speed, newBeat) -- player update returns a new bullet if created
+        local bullet = plr:update(dt * speed, onBeat) -- player update returns a new bullet if created
         if bullet then
             table.insert(self.bullets, bullet)
         end
     end
-    self.bgColour = 320 * math.max(0, 0.1 - prog)
+    self.bgColour = 320 * math.max(0, 0.1 - (self.beat % 1))
 end
 
 function game.draw(self)
     love.graphics.setBackgroundColor(self.bgColour, self.bgColour, self.bgColour)
     love.graphics.setColor(128, 128, 128)
-    love.graphics.print(math.min(self.beat, self.track.length), 10, 10)
+    love.graphics.print(math.floor(math.min(self.beat, self.track.length)), 10, 10)
     love.graphics.print("Scores", 10, love.window.getHeight() - 30 - (15 * #self.players))
     love.graphics.printf("Deaths", love.window.getWidth() - 80, love.window.getHeight() - 30 - (15 * #self.players), 70, "right")
     for i, plr in ipairs(self.players) do

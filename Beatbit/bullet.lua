@@ -17,7 +17,7 @@ function bullet.new(self, x, y, direct, plr)
     self.x = x
     self.y = y
     self.size = 10
-    self.speed = 400
+    self.speed = 200
     self.direct = direct
     self.player = plr
 end

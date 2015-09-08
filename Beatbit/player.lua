@@ -19,14 +19,14 @@ function player.new(self, joy, colour)
     self.size = 20
     self.x = math.random(self.size / 2, love.window.getWidth() - (self.size / 2))
     self.y = math.random(self.size / 2, love.window.getHeight() - (self.size / 2))
-    self.speed = 400
+    self.speed = 200
     self.score = 0
     self.deaths = 0
 end
 
 function player.destroy(self)
     entity.destroy(self)
-    self.respawnTTL = 2
+    self.respawnTTL = 4
     self.drawMode = "line"
 end
 
