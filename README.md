@@ -39,38 +39,47 @@ Inside `track.json`:
     "artist": "Cool Dude",
     "title": "Track Name",
     "music": "music.mp3",
-    "bpm": 140,
     "start": 0.21,
-    "length": 254
+    "length": 254,
+    "changes": {...}
 }
 ```
 
 Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.
 
-### Advanced
+### Changesets
 
-A song may not have a constant BPM.  In this case, replace the `bpm` line with an array of BPMs:
-
-```json
-{
-    "bpm": [
-        [0, 140],
-        [32, 110],
-        [48, 140]
-    ]
-}
-```
-
-Note that the position (first column) is also measured in **beats**, not seconds.  The benefit is nice round values, since you'll likely be changing BPM on a beat, though the consequence is changing an earlier BPM causes later entries to be incorrect.
-
-Use `speed` to create beat ranges where all movement is accelerated or slowed.
+Each song consists of one or more changes.  For a basic song, only an initial BPM is required:
 
 ```json
 {
-    "speed": [
-        [64, 96, 0.5]
-    ]
+    "changes": [{
+        "bpm": 140
+    }]
 }
 ```
 
-The third column acts as a modifier, and multiple speeds can stack (e.g. `2` and `0.5` would cancel out).  Speed differs from BPM in that the bullet firing rate is unaffected.
+Songs will typically not be constant.  Subsequent changes can be added, but require timing for when to apply them:
+
+```json
+{
+    "changes": [{
+        "bpm": 140,
+        "speed": 1
+    }, {
+        "at": 32,
+        "bpm": 110
+    }, {
+        "at": 48,
+        "bpm": 140,
+        "speed": 0.5
+    }, {
+        "at": 56,
+        "speed": 1
+    }]
+}
+```
+
+BPM affects the rate of actions in game (player firing rate, enemy spawning), whereas speed only affects movement.
+
+Note that the `at` value is also measured in **beats**, not seconds.  The benefit is nice round values, since you'll likely be changing BPM on a beat, though the consequence is changing an earlier BPM causes later entries to be incorrect.

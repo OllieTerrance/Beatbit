@@ -27,6 +27,8 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
+    self.bpm = track.changes[1].bpm
+    self.speed = ((self.bpm * (type(track.changes[1].speed) == "number" and track.changes[1].speed or 1)) / 60)
     self.bgColour = 0
     self.menuPause = menu(100, function()
         self.pause = false
@@ -76,33 +78,25 @@ function game.update(self, dt)
     if pos < 0 then -- waiting for first beat
         return
     end
-    local bpm = self.track.bpm
-    if type(self.track.bpm) == "table" then -- multiple bpms, loop through to find current
-        bpm = self.track.bpm[1][2] -- in case bpm not defined at beat 0, use the first known bpm
-        for i, bpmLine in ipairs(self.track.bpm) do
-            blBeat, blBpm = unpack(bpmLine)
-            if blBeat <= self.beat then
-                bpm = blBpm
-            else -- gone too far, stop looking (and take previous value)
-                break
-            end
+    local changeAt
+    for i, at in ipairs(self.track.changeAts) do
+        if at <= self.beat then
+            changeAt = self.track.changeMap[at]
+        else -- gone too far, stop looking (and take previous value)
+            break
         end
     end
-    local newBeat = self.beat + ((dt * bpm) / 60)
+    local change = self.track.changes[changeAt]
+    if type(change) == "table" then
+        self.bpm = type(change.bpm) == "nil" and self.bpm or change.bpm
+        self.speed = type(change.speed) == nil and self.speed or ((self.bpm * change.speed) / 60)
+    end
+    local newBeat = self.beat + ((dt * self.bpm) / 60)
     local onBeat = math.floor(newBeat) > math.floor(self.beat)
     self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
-    local speed = bpm / 60
-    if self.track.speed then
-        for i, speedLine in ipairs(self.track.speed) do
-            low, high, mod = unpack(speedLine)
-            if self.beat >= low and self.beat < high then
-                speed = speed * mod
-            end
-        end
-    end
     for i = #self.enemies, 1, -1 do
         local enemy = self.enemies[i]
-        enemy:update(dt * speed)
+        enemy:update(dt * self.speed)
         if enemy.destroyTTL and enemy.destroyTTL < 0 then -- destroy animation finished
             table.remove(self.enemies, i)
         elseif enemy:visible() then
@@ -129,13 +123,13 @@ function game.update(self, dt)
                 plr.destroyTTL = nil
                 return
             else
-                plr:update(dt * speed)
+                plr:update(dt * self.speed)
             end
         end
     end
     for i = #self.bullets, 1, -1 do
         local bullet = self.bullets[i]
-        bullet:update(dt * speed)
+        bullet:update(dt * self.speed)
         if bullet.destroyTTL and bullet.destroyTTL < 0 then -- destroy animation finished
             table.remove(self.bullets, i)
         elseif bullet:visible() then
@@ -172,7 +166,7 @@ function game.update(self, dt)
         table.insert(self.enemies, enemy(self.players))
     end
     for i, plr in ipairs(self.players) do
-        local bullet = plr:update(dt * speed, onBeat) -- player update returns a new bullet if created
+        local bullet = plr:update(dt * self.speed, onBeat) -- player update returns a new bullet if created
         if bullet then
             plr.shots = plr.shots + 1
             table.insert(self.bullets, bullet)
