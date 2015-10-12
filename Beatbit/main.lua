@@ -13,9 +13,45 @@ function loadTracks()
     for i, file in ipairs(dir) do
         if love.filesystem.isDirectory("tracks/" .. file)
         and love.filesystem.isFile("tracks/" .. file .. "/track.json") then
-            track = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
-            track.dir = file
-            tracks[file] = track
+            local track = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
+            local ok = true
+            for i, field in ipairs({"title", "music", "length"}) do
+                if type(track[field]) == "nil" then
+                    print("Load failure [" .. file .. "]: missing " .. field)
+                    ok = false
+                end
+            end
+            if type(track.start) == "nil" then
+                print("Load warning [" .. file .. "]: missing start (default to 0)")
+                ok = false
+            end
+            if type(track.changes) == "table" and #track.changes > 0 then
+                track.changeAts = {}
+                track.changeMap = {}
+                for i, change in ipairs(track.changes) do
+                    if i == 1 then
+                        if type(change.bpm) == "nil" then
+                            print("Load failure [" .. file .. "] missing initial BPM")
+                            ok = false
+                        end
+                    else
+                        if type(change.at) == "number" then
+                            table.insert(track.changeAts, change.at)
+                            track.changeMap[change.at] = i
+                        else
+                            print("Load warning [" .. file .. "]: change #" .. i .. " has no timing")
+                        end
+                    end
+                end
+                table.sort(track.changeAts)
+            else
+                print("Load failure [" .. file .. "]: missing changes")
+                ok = false
+            end
+            if ok then
+                track.dir = file
+                tracks[file] = track
+            end
         end
     end
     menuPlay = menu(300, function()
@@ -23,7 +59,7 @@ function loadTracks()
     end)
     for name, track in next, tracks do
         menuPlay:add({
-            label = track.artist .. " -- " .. track.title,
+            label = (track.artist and (track.artist .. " -- ") or "") .. track.title,
             action = function()
                 setup.selectTrack(track)
             end
@@ -152,7 +188,7 @@ function love.draw()
         menuMain:draw(10, 10, setup.mode == "menu-main")
         if string.sub(setup.mode, 0, 9) == "menu-play" then
             if next(menuPlay.items) == nil then
-                love.graphics.print("No tracks detected!", 120, 14)
+                love.graphics.print("No tracks loaded!", 120, 14)
             else
                 menuPlay:draw(120, 10, setup.mode == "menu-play")
             end
