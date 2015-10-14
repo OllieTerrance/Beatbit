@@ -27,8 +27,18 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
-    self.bpm = track.changes[1].bpm
-    self.speed = ((self.bpm * (type(track.changes[1].speed) == "number" and track.changes[1].speed or 1)) / 60)
+    local change = track.changes[1]
+    self.bpm = change.bpm
+    self.speed = ((self.bpm * (type(change.speed) == "number" and change.speed or 1)) / 60)
+    self.pattern = {
+        at = 0,
+        beats = (type(change.pattern) == "table" and change.pattern or {0}),
+        loop = (type(change.loop) == "number" and change.loop or 1),
+        ptr = 1,
+        count = 0,
+        last = false
+    }
+    self.changeAt = 1
     self.bgColour = 0
     self.menuPause = menu(100, function()
         self.pause = false
@@ -78,7 +88,7 @@ function game.update(self, dt)
     if pos < 0 then -- waiting for first beat
         return
     end
-    local changeAt
+    local changeAt = 1
     for i, at in ipairs(self.track.changeAts) do
         if at <= self.beat then
             changeAt = self.track.changeMap[at]
@@ -86,14 +96,40 @@ function game.update(self, dt)
             break
         end
     end
-    local change = self.track.changes[changeAt]
-    if type(change) == "table" then
-        self.bpm = type(change.bpm) == "nil" and self.bpm or change.bpm
-        self.speed = type(change.speed) == nil and self.speed or ((self.bpm * change.speed) / 60)
+    if not (changeAt == self.changeAt) then
+        local change = self.track.changes[changeAt]
+        self.bpm = type(change.bpm) == "number" and change.bpm or self.bpm
+        self.speed = type(change.speed) == "number" and ((self.bpm * change.speed) / 60) or self.speed
+        if type(change.pattern) == "table" then
+            self.pattern = {
+                at = changeAt,
+                beats = change.pattern,
+                loop = type(change.loop) == "number" and change.loop or self.pattern.loop,
+                ptr = 1,
+                count = 0,
+                last = false
+            }
+        end
+        self.changeAt = changeAt
     end
     local newBeat = self.beat + ((dt * self.bpm) / 60)
-    local onBeat = math.floor(newBeat) > math.floor(self.beat)
     self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
+    local onBeat = false
+    if #self.pattern.beats then
+        local patternBeat = self.beat - self.pattern.at
+        local patternCount = math.floor(patternBeat / self.pattern.loop)
+        if patternCount > self.pattern.count then -- new iteration of pattern, stop blocking
+            self.pattern.count = patternCount
+            self.pattern.last = false
+        end
+        if not self.pattern.last and (patternBeat % self.pattern.loop) > self.pattern.beats[self.pattern.ptr] then -- hit next beat in pattern
+            onBeat = true
+            self.pattern.ptr = (self.pattern.ptr % #self.pattern.beats) + 1
+            if self.pattern.ptr == 1 then -- last beat in pattern, block until next iteration
+                self.pattern.last = true
+            end
+        end
+    end
     for i = #self.enemies, 1, -1 do
         local enemy = self.enemies[i]
         enemy:update(dt * self.speed)
