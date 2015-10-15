@@ -267,6 +267,19 @@ function game.keypressed(self, key)
     elseif key == "escape" then
         self.pause = true
         self.music:pause()
+    elseif key == "=" then
+        local add = self.pattern.loop
+        for i, at in ipairs(self.track.changeAts) do
+            if self.beat < at and (self.beat + 4) >= at then -- don't skip across changes
+                add = at - self.beat
+                self.beat = at
+                break
+            end
+        end
+        self.music:seek(self.music:tell() + ((60 / self.bpm) * add))
+        if add == self.pattern.loop then
+            self.beat = self.beat + add
+        end
     end
 end
 
