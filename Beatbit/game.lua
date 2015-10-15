@@ -17,6 +17,20 @@ setmetatable(game, {
     end
 })
 
+function game.setChange(self, change)
+    self.bpm = change.bpm or self.bpm
+    self.speed = (change.speed and ((self.bpm * change.speed) / 60) or self.speed)
+    if change.pattern then
+        self.pattern = {
+            beats = (change.pattern and change.pattern or {0}),
+            loop = (change.loop and change.loop or (math.floor(change.pattern[#change.pattern]) + 1)), -- default to next integer beat after last note
+            ptr = 1,
+            count = 0,
+            last = false
+        }
+    end
+end
+
 function game.new(self, track, players)
     self.track = track
     self.music = love.audio.newSource("tracks/" .. self.track.dir .. "/" .. self.track.music)
@@ -27,17 +41,8 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
-    local change = track.changes[1]
-    self.bpm = change.bpm
-    self.speed = ((self.bpm * (type(change.speed) == "number" and change.speed or 1)) / 60)
-    self.pattern = {
-        at = 0,
-        beats = (type(change.pattern) == "table" and change.pattern or {0}),
-        loop = (type(change.loop) == "number" and change.loop or 1),
-        ptr = 1,
-        count = 0,
-        last = false
-    }
+    self:setChange(track.changes[1])
+    self.speed = self.speed or (self.bpm / 60)
     self.changeAt = 1
     self.bgColour = 0
     self.menuPause = menu(100, function()
@@ -63,9 +68,13 @@ function game.new(self, track, players)
             self.enemies = {}
             self.bullets = {}
             self.beat = 0
+            self.speed = nil
+            self:setChange(track.changes[1])
+            self.speed = self.speed or (self.bpm / 60)
             self.bgColour = 0
             self.music:rewind()
             self.pause = false
+            self.menuPause.selected = 1
             self.music:play()
         end
     })
@@ -97,32 +106,19 @@ function game.update(self, dt)
         end
     end
     if not (changeAt == self.changeAt) then
-        local change = self.track.changes[changeAt]
-        self.bpm = type(change.bpm) == "number" and change.bpm or self.bpm
-        self.speed = type(change.speed) == "number" and ((self.bpm * change.speed) / 60) or self.speed
-        if type(change.pattern) == "table" then
-            self.pattern = {
-                at = changeAt,
-                beats = change.pattern,
-                loop = type(change.loop) == "number" and change.loop or self.pattern.loop,
-                ptr = 1,
-                count = 0,
-                last = false
-            }
-        end
+        self:setChange(self.track.changes[changeAt])
         self.changeAt = changeAt
     end
     local newBeat = self.beat + ((dt * self.bpm) / 60)
     self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
     local onBeat = false
     if #self.pattern.beats then
-        local patternBeat = self.beat - self.pattern.at
-        local patternCount = math.floor(patternBeat / self.pattern.loop)
+        local patternCount = math.floor(self.beat / self.pattern.loop)
         if patternCount > self.pattern.count then -- new iteration of pattern, stop blocking
             self.pattern.count = patternCount
             self.pattern.last = false
         end
-        if not self.pattern.last and (patternBeat % self.pattern.loop) > self.pattern.beats[self.pattern.ptr] then -- hit next beat in pattern
+        if not self.pattern.last and (self.beat % self.pattern.loop) > self.pattern.beats[self.pattern.ptr] then -- hit next beat in pattern
             onBeat = true
             self.pattern.ptr = (self.pattern.ptr % #self.pattern.beats) + 1
             if self.pattern.ptr == 1 then -- last beat in pattern, block until next iteration
