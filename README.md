@@ -84,17 +84,21 @@ BPM affects the rate of actions in game (player firing rate, enemy spawning), wh
 
 Note that the `at` value is also measured in **beats**, not seconds.  The benefit is nice round values, since you'll likely be changing BPM on a beat, though the consequence is changing an earlier BPM causes later entries to be incorrect.
 
-### Patterns
+### Melodies
 
-The default changeset assumes every beat is a beat of the song.  You will likely want more control on this (for example, with off-beat notes or more complicated melodies).  Enter the pattern:
+The default changeset assumes every beat is a beat of the song.  You will likely want more control on this (for example, with off-beat notes or more complicated patterns).  Enter the melody:
 
 ```json
 {
     "changes": [{
-        "pattern": [0, 0.5, 1.5, 2.5, 3],
-        "length": 4
+        "melody": {
+            "map": [0, 0.5, 1.5, 2.5, 3, 4, 6],
+            "loop": 8
+        }
     }]
 }
 ```
 
-This defines a repeating pattern of length 4 (it is actually the first 5 notes to the Overworld music in Super Mario Bros.), for which in-game beats occur on and off the regular timing.
+This defines a repeating pattern of length 8 (it is actually the first seven notes to the Overworld music in Super Mario Bros.), for which in-game beats occur on and off the regular timing.
+
+The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is `{"map": [0]}` -- that is, a simple on-beat melody.

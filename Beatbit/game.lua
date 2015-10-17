@@ -20,10 +20,10 @@ setmetatable(game, {
 function game.setChange(self, change)
     self.bpm = change.bpm or self.bpm
     self.speed = (change.speed and ((self.bpm * change.speed) / 60) or self.speed)
-    if change.pattern then
-        self.pattern = {
-            beats = (change.pattern and change.pattern or {0}),
-            loop = (change.loop and change.loop or (math.floor(change.pattern[#change.pattern]) + 1)), -- default to next integer beat after last note
+    if change.melody then
+        self.melody = {
+            map = (change.melody.map and change.melody.map or {0}),
+            loop = (change.melody.loop and change.melody.loop or (math.floor(change.melody.map[#change.melody.map]) + 1)), -- default to next integer beat after last note
             ptr = 1,
             count = 0,
             last = false
@@ -41,6 +41,13 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
+    self.melody = {
+        map = {0},
+        loop = 1,
+        ptr = 1,
+        count = 0,
+        last = false
+    }
     self:setChange(track.changes[1])
     self.speed = self.speed or (self.bpm / 60)
     self.changeAt = 1
@@ -68,6 +75,13 @@ function game.new(self, track, players)
             self.enemies = {}
             self.bullets = {}
             self.beat = 0
+            self.melody = {
+                map = {0},
+                loop = 1,
+                ptr = 1,
+                count = 0,
+                last = false
+            }
             self.speed = nil
             self:setChange(track.changes[1])
             self.speed = self.speed or (self.bpm / 60)
@@ -97,6 +111,8 @@ function game.update(self, dt)
     if pos < 0 then -- waiting for first beat
         return
     end
+    local newBeat = self.beat + ((dt * self.bpm) / 60)
+    self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
     local changeAt = 1
     for i, at in ipairs(self.track.changeAts) do
         if at <= self.beat then
@@ -109,20 +125,18 @@ function game.update(self, dt)
         self:setChange(self.track.changes[changeAt])
         self.changeAt = changeAt
     end
-    local newBeat = self.beat + ((dt * self.bpm) / 60)
-    self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
     local onBeat = false
-    if #self.pattern.beats then
-        local patternCount = math.floor(self.beat / self.pattern.loop)
-        if patternCount > self.pattern.count then -- new iteration of pattern, stop blocking
-            self.pattern.count = patternCount
-            self.pattern.last = false
+    if #self.melody.map then
+        local melodyCount = math.floor(self.beat / self.melody.loop)
+        if melodyCount > self.melody.count then -- new iteration of melody, stop blocking
+            self.melody.count = melodyCount
+            self.melody.last = false
         end
-        if not self.pattern.last and (self.beat % self.pattern.loop) > self.pattern.beats[self.pattern.ptr] then -- hit next beat in pattern
+        if not self.melody.last and (self.beat % self.melody.loop) > self.melody.map[self.melody.ptr] then -- hit next beat in melody
             onBeat = true
-            self.pattern.ptr = (self.pattern.ptr % #self.pattern.beats) + 1
-            if self.pattern.ptr == 1 then -- last beat in pattern, block until next iteration
-                self.pattern.last = true
+            self.melody.ptr = (self.melody.ptr % #self.melody.map) + 1
+            if self.melody.ptr == 1 then -- last beat in melody, block until next iteration
+                self.melody.last = true
             end
         end
     end
@@ -268,7 +282,7 @@ function game.keypressed(self, key)
         self.pause = true
         self.music:pause()
     elseif key == "=" then
-        local add = self.pattern.loop
+        local add = self.melody.loop
         for i, at in ipairs(self.track.changeAts) do
             if self.beat < at and (self.beat + 4) >= at then -- don't skip across changes
                 add = at - self.beat
@@ -277,7 +291,7 @@ function game.keypressed(self, key)
             end
         end
         self.music:seek(self.music:tell() + ((60 / self.bpm) * add))
-        if add == self.pattern.loop then
+        if add == self.melody.loop then
             self.beat = self.beat + add
         end
     end
