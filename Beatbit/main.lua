@@ -15,38 +15,47 @@ function loadTracks()
         and love.filesystem.isFile("tracks/" .. file .. "/track.json") then
             local track = json:decode(love.filesystem.read("tracks/" .. file .. "/track.json"))
             local ok = true
-            for i, field in ipairs({"title", "music", "length"}) do
-                if type(track[field]) == "nil" then
-                    print("Load failure [" .. file .. "]: missing " .. field)
+            for j, field in ipairs({{"title", "string"}, {"music", "string"}, {"length", "number"}, {"bpm", "number"}}) do -- required fields
+                if not (type(track[field[1]]) == field[2]) then
                     ok = false
+                    print("Load failure [" .. file .. "]: missing or invalid " .. field[1])
                 end
             end
-            if type(track.start) == "nil" then
-                print("Load warning [" .. file .. "]: missing start (default to 0)")
+            if not (type(track.music) == "string") or not love.filesystem.isFile("tracks/" .. file .. "/" .. track.music) then
                 ok = false
+                print("Load failure [" .. file .. "]: missing or unreadable music at " .. track.music)
             end
-            if type(track.changes) == "table" and #track.changes > 0 then
-                track.changeAts = {}
-                track.changeMap = {}
-                for i, change in ipairs(track.changes) do
-                    if i == 1 then
-                        if type(change.bpm) == "nil" then
-                            print("Load failure [" .. file .. "] missing initial BPM")
-                            ok = false
-                        end
+            for j, field in ipairs({{"artist", "string", ""}, {"start", "number", 0}, {"speed", "number", 1}, {"melody", "table", {map = {0}}},
+                                    {"rhythm", "table", {map = {0}}}, {"changes", "table", {}}}) do -- optional fields
+                if not track[field[1]] or not (type(track[field[1]]) == field[2]) then
+                    if track[field[1]] then
+                        print("Load note [" .. file .. "]: invalid " .. field[1] .. ", using default " .. field[3])
+                    end
+                    track[field[1]] = field[3]
+                end
+            end
+            if #track.changes > 0 then
+                track.changeAts = {} -- (to-be) sorted list of change beat times
+                track.changeMap = {} -- mapping from change time to index in changes
+                for j, change in ipairs(track.changes) do
+                    local changeOk = true
+                    if not (type(change.at) == "number") then
+                        changeOk = false
+                        print("Load warning [" .. file .. "]: (change #" .. j .. ") missing at, skipped")
                     else
-                        if type(change.at) == "number" then
-                            table.insert(track.changeAts, change.at)
-                            track.changeMap[change.at] = i
-                        else
-                            print("Load warning [" .. file .. "]: change #" .. i .. " has no timing")
+                        for k, changeField in ipairs({{"bpm", "number"}, {"speed", "number"}, {"melody", "table"}, {"rhythm", "table"}}) do
+                            if change[changeField[1]] and not (type(change[changeField[1]]) == changeField[2]) then
+                                change[changeField[1]] = nil
+                                print("Load warning [" .. file .. "]: (change #" .. j .. ") invalid " .. changeField[1] .. ", dropped field")
+                            end
                         end
+                    end
+                    if changeOk then
+                        table.insert(track.changeAts, change.at)
+                        track.changeMap[change.at] = j
                     end
                 end
                 table.sort(track.changeAts)
-            else
-                print("Load failure [" .. file .. "]: missing changes")
-                ok = false
             end
             if ok then
                 track.dir = file
@@ -74,7 +83,7 @@ menuWinSize:add({
     label = "Full screen",
     action = function()
         local width, height = love.window.getDesktopDimensions()
-        love.window.setMode(width, height, { -- must set vsync/fullscreen each time, not remembered from love.conf
+        love.window.setMode(width, height, { -- must set vsync each time, not remembered from love.conf
             fullscreen = true,
             fullscreentype = "desktop",
             vsync = false

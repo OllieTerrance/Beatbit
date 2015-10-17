@@ -19,7 +19,7 @@ setmetatable(game, {
 
 function game.setChange(self, change)
     self.bpm = change.bpm or self.bpm
-    self.speed = (change.speed and ((self.bpm * change.speed) / 60) or self.speed)
+    self.speed = (change.speed and ((self.bpm * change.speed) / 60) or self.speed) -- change.speed always set on init
     for i, field in ipairs({"melody", "rhythm"}) do
         if change[field] then
             self[field] = {
@@ -43,18 +43,8 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
-    for i, field in ipairs({"melody", "rhythm"}) do
-        self[field] = {
-            map = {0},
-            loop = 1,
-            ptr = 1,
-            count = 0,
-            last = false
-        }
-    end
-    self:setChange(track.changes[1])
-    self.speed = self.speed or (self.bpm / 60)
-    self.changeAt = 1
+    self:setChange(self.track)
+    self.changeAt = 0
     self.bgColour = 0
     self.menuPause = menu(100, function()
         self.pause = false
@@ -79,18 +69,8 @@ function game.new(self, track, players)
             self.enemies = {}
             self.bullets = {}
             self.beat = 0
-            for i, field in ipairs({"melody", "rhythm"}) do
-                self[field] = {
-                    map = {0},
-                    loop = 1,
-                    ptr = 1,
-                    count = 0,
-                    last = false
-                }
-            end
-            self.speed = nil
-            self:setChange(track.changes[1])
-            self.speed = self.speed or (self.bpm / 60)
+            self:setChange(self.track)
+            self.changeAt = 0
             self.bgColour = 0
             self.music:rewind()
             self.pause = false
@@ -119,7 +99,7 @@ function game.update(self, dt)
     end
     local newBeat = self.beat + ((dt * self.bpm) / 60)
     self.beat = math.max(newBeat, self.beat) -- avoid occasional backward steps in time
-    local changeAt = 1
+    local changeAt = 0
     for i, at in ipairs(self.track.changeAts) do
         if at <= self.beat then
             changeAt = self.track.changeMap[at]
@@ -134,7 +114,7 @@ function game.update(self, dt)
     local onBeat = {}
     for i, field in ipairs({"melody", "rhythm"}) do
         onBeat[field] = false
-        if #self[field].map then
+        if #self[field].map > 0 then
             local count = math.floor(self.beat / self[field].loop)
             if count > self[field].count then -- new iteration of pattern, stop blocking
                 self[field].count = count

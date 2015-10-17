@@ -40,8 +40,7 @@ Inside `track.json`:
     "title": "Track Name",
     "music": "music.mp3",
     "start": 0.21,
-    "length": 254,
-    "changes": {...}
+    "length": 254
 }
 ```
 
@@ -90,12 +89,10 @@ The default changeset assumes every beat is a beat of the song.  You will likely
 
 ```json
 {
-    "changes": [{
-        "melody": {
-            "map": [0, 0.5, 1.5, 2.5, 3, 4, 6],
-            "loop": 8
-        }
-    }]
+    "melody": {
+        "map": [0, 0.5, 1.5, 2.5, 3, 4, 6],
+        "loop": 8
+    }
 }
 ```
 
@@ -103,4 +100,4 @@ This defines a repeating pattern of length 8 (it is actually the first seven not
 
 The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is `{"map": [0]}` -- that is, a simple on-beat pattern.
 
-In Beatbit, there are two such pattern variables: `melody` and `rhythm`.  The former controls player firing rate, whist the latter affects enemy spawn rates.
+In Beatbit, there are two such pattern variables: `melody` and `rhythm`.  The former controls player firing rate, whist the latter affects enemy spawn rates.  Both of these can also be used inside changesets.
