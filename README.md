@@ -86,7 +86,7 @@ Note that the `at` value is also measured in **beats**, not seconds.  The benefi
 
 ### Melodies
 
-The default changeset assumes every beat is a beat of the song.  You will likely want more control on this (for example, with off-beat notes or more complicated patterns).  Enter the melody:
+The default changeset assumes every beat is a beat of the song.  You will likely want more control on this (for example, with off-beat notes or more complicated patterns).  Enter the melody and rhythm:
 
 ```json
 {
@@ -101,4 +101,6 @@ The default changeset assumes every beat is a beat of the song.  You will likely
 
 This defines a repeating pattern of length 8 (it is actually the first seven notes to the Overworld music in Super Mario Bros.), for which in-game beats occur on and off the regular timing.
 
-The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is `{"map": [0]}` -- that is, a simple on-beat melody.
+The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is `{"map": [0]}` -- that is, a simple on-beat pattern.
+
+In Beatbit, there are two such pattern variables: `melody` and `rhythm`.  The former controls player firing rate, whist the latter affects enemy spawn rates.

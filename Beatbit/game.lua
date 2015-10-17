@@ -20,14 +20,16 @@ setmetatable(game, {
 function game.setChange(self, change)
     self.bpm = change.bpm or self.bpm
     self.speed = (change.speed and ((self.bpm * change.speed) / 60) or self.speed)
-    if change.melody then
-        self.melody = {
-            map = (change.melody.map and change.melody.map or {0}),
-            loop = (change.melody.loop and change.melody.loop or (math.floor(change.melody.map[#change.melody.map]) + 1)), -- default to next integer beat after last note
-            ptr = 1,
-            count = 0,
-            last = false
-        }
+    for i, field in ipairs({"melody", "rhythm"}) do
+        if change[field] then
+            self[field] = {
+                map = (change[field].map and change[field].map or {0}),
+                loop = (change[field].loop and change[field].loop or (math.floor(change[field].map[#change[field].map]) + 1)), -- default to next integer beat after last note
+                ptr = 1,
+                count = 0,
+                last = false
+            }
+        end
     end
 end
 
@@ -41,13 +43,15 @@ function game.new(self, track, players)
     self.enemies = {}
     self.bullets = {}
     self.beat = 0
-    self.melody = {
-        map = {0},
-        loop = 1,
-        ptr = 1,
-        count = 0,
-        last = false
-    }
+    for i, field in ipairs({"melody", "rhythm"}) do
+        self[field] = {
+            map = {0},
+            loop = 1,
+            ptr = 1,
+            count = 0,
+            last = false
+        }
+    end
     self:setChange(track.changes[1])
     self.speed = self.speed or (self.bpm / 60)
     self.changeAt = 1
@@ -75,13 +79,15 @@ function game.new(self, track, players)
             self.enemies = {}
             self.bullets = {}
             self.beat = 0
-            self.melody = {
-                map = {0},
-                loop = 1,
-                ptr = 1,
-                count = 0,
-                last = false
-            }
+            for i, field in ipairs({"melody", "rhythm"}) do
+                self[field] = {
+                    map = {0},
+                    loop = 1,
+                    ptr = 1,
+                    count = 0,
+                    last = false
+                }
+            end
             self.speed = nil
             self:setChange(track.changes[1])
             self.speed = self.speed or (self.bpm / 60)
@@ -125,18 +131,21 @@ function game.update(self, dt)
         self:setChange(self.track.changes[changeAt])
         self.changeAt = changeAt
     end
-    local onBeat = false
-    if #self.melody.map then
-        local melodyCount = math.floor(self.beat / self.melody.loop)
-        if melodyCount > self.melody.count then -- new iteration of melody, stop blocking
-            self.melody.count = melodyCount
-            self.melody.last = false
-        end
-        if not self.melody.last and (self.beat % self.melody.loop) > self.melody.map[self.melody.ptr] then -- hit next beat in melody
-            onBeat = true
-            self.melody.ptr = (self.melody.ptr % #self.melody.map) + 1
-            if self.melody.ptr == 1 then -- last beat in melody, block until next iteration
-                self.melody.last = true
+    local onBeat = {}
+    for i, field in ipairs({"melody", "rhythm"}) do
+        onBeat[field] = false
+        if #self[field].map then
+            local count = math.floor(self.beat / self[field].loop)
+            if count > self[field].count then -- new iteration of pattern, stop blocking
+                self[field].count = count
+                self[field].last = false
+            end
+            if not self[field].last and (self.beat % self[field].loop) > self[field].map[self[field].ptr] then -- hit next beat in pattern
+                onBeat[field] = true
+                self[field].ptr = (self[field].ptr % #self[field].map) + 1
+                if self[field].ptr == 1 then -- last beat in pattern, block until next iteration
+                    self[field].last = true
+                end
             end
         end
     end
@@ -208,11 +217,11 @@ function game.update(self, dt)
             self.ended = true
         end
         return
-    elseif onBeat then -- start of next beat, spawn an enemy
+    elseif onBeat["rhythm"] then -- start of next beat, spawn an enemy
         table.insert(self.enemies, enemy(self.players))
     end
     for i, plr in ipairs(self.players) do
-        local bullet = plr:update(dt * self.speed, onBeat) -- player update returns a new bullet if created
+        local bullet = plr:update(dt * self.speed, onBeat["melody"]) -- player update returns a new bullet if created
         if bullet then
             plr.shots = plr.shots + 1
             table.insert(self.bullets, bullet)
