@@ -1,10 +1,10 @@
 # Beatbit
 
-A rhythmic 2D shooter, written in Lua for LÖVE.
+A rhythmic 2D shooter, where enemies and weapons act to the beat of the music.
 
 ## Start
 
-Setup LÖVE if you haven't already (you'll need at least version 0.9.0).  Download [JSON.lua](http://regex.info/code/JSON.lua) and save it as `Beatbit/lib/JSON.lua`.
+Download LÖVE if you haven't already (you'll need at least version 0.9.0).  You'll also need a copy of [JSON.lua](http://regex.info/code/JSON.lua), saved as `Beatbit/lib/JSON.lua`.
 
 Run the unpacked app with `.../path/to/love Beatbit`.
 
@@ -32,6 +32,8 @@ The structure of a track should look something like the following:
   - track.json
   - music.mp3
 
+Other audio formats are available -- check the list of [supported formats in LÖVE](https://love2d.org/wiki/Audio_Formats).
+
 Inside `track.json`:
 
 ```json
@@ -44,21 +46,23 @@ Inside `track.json`:
 }
 ```
 
-Here, `start` is the position (in seconds) of the first beat, whereas `length` is the number of **beats** to the end of the song.
+Valid top-level properties in a `track.json` file:
+
+Property | Required (default)  | Description
+-------- | ------------------- | ------------------------------------------
+`artist` | No (`""`)           | Artist of the song
+`title`  | Yes                 | Name of the song
+`music`  | Yes                 | Relative path to the audio file
+`start`  | No (`0`)            | Position of the first beat, in **seconds**
+`length` | Yes                 | Number of beats to the end of the song
+`bpm`    | Yes                 | Number of beats per minute
+`speed`  | No (`1`)            | Relative in-game speed
+`melody` | No (`{"map": [0]}`) | Primary song pattern and loop size
+`rhythm` | No (`{"map": [0]}`) | Secondary song pattern and loop size
 
 ### Changesets
 
-Each song consists of one or more changes.  For a basic song, only an initial BPM is required:
-
-```json
-{
-    "changes": [{
-        "bpm": 140
-    }]
-}
-```
-
-Songs will typically not be constant.  Subsequent changes can be added, but require timing for when to apply them:
+Songs may not be constant in BPM or speed.  Any changes to values can be defined inside a `changes` array, with each changeset requiring timing for when to apply them:
 
 ```json
 {
@@ -81,7 +85,17 @@ Songs will typically not be constant.  Subsequent changes can be added, but requ
 
 BPM affects the rate of actions in game (player firing rate, enemy spawning), whereas speed only affects movement.
 
-Note that the `at` value is also measured in **beats**, not seconds.  The benefit is nice round values, since you'll likely be changing BPM on a beat, though the consequence is changing an earlier BPM causes later entries to be incorrect.
+Valid properties in a changeset (`at` is required; all others default to none, i.e. causing no change in that component):
+
+Property | Description
+-------- | ------------------------------------------------
+`at`     | Position from which the change applies, in beats
+`bpm`    | Number of beats per minute
+`speed`  | Relative in-game speed
+`melody` | Primary song pattern and loop size
+`rhythm` | Secondary song pattern and loop size
+
+The benefit of measuring in beats rather than time is nice round values, since you'll likely be changing BPM on a beat, though the consequence is changing an earlier BPM causes later entries to be incorrect.
 
 ### Melodies
 
@@ -98,6 +112,6 @@ The default changeset assumes every beat is a beat of the song.  You will likely
 
 This defines a repeating pattern of length 8 (it is actually the first seven notes to the Overworld music in Super Mario Bros.), for which in-game beats occur on and off the regular timing.
 
-The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is `{"map": [0]}` -- that is, a simple on-beat pattern.
+The `loop` value can be omitted if the pattern fills the last whole beat (in the example, it would actually default to `7`, hence the explicit definition is required).  If no melodies are specified, the default at time zero is a single beat on `0`, and a loop of `1` -- that is, a simple on-beat pattern.
 
 In Beatbit, there are two such pattern variables: `melody` and `rhythm`.  The former controls player firing rate, whist the latter affects enemy spawn rates.  Both of these can also be used inside changesets.
